@@ -1,4 +1,4 @@
-minilibx-linux
+
 *.png
 *.ppm
 **/*.o
