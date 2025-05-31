@@ -1,0 +1,12 @@
+minilibx-linux
+*.png
+*.ppm
+**/*.o
+**/*.out
+.vscode/*
+rt
+*.pdf
+*.ipynb
+test.cpp
+image.cpp
+image
