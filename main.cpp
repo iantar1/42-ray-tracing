@@ -1,8 +1,10 @@
 
-#include "includes/Constants.hpp"
-#include "includes/Material.hpp"
-#include "includes/Camera.hpp"
-# include "minilibx-linux/mlx.h"
+// #include "includes/Constants.hpp"
+// #include "includes/Material.hpp"
+// #include "includes/Camera.hpp"
+extern "C" {
+    #include "minilibx-linux/mlx.h"
+}
 # include <stdlib.h>
 
 int    close_window()
@@ -12,9 +14,19 @@ int    close_window()
 }
 
 
-void render(void* img)
+void render(void* data, int size_line, int bits_per_pixel)
 {
+    int x = 100;
+    int y = 100;
 
+    int bytes_per_pixel = bits_per_pixel / 8;
+    int offset = (y * size_line) + (x * bytes_per_pixel);
+
+    for (int x=0, x < 100, x++)
+    {
+        for (int y = )
+    }
+    *(unsigned int*)(data + offset) = 0x00FF0000;
 }
 
 int main() {
@@ -35,7 +47,7 @@ int main() {
     void*  img = mlx_new_image(mlx, image_width, image_height);
     void* data = mlx_get_data_addr(img, &bits_per_pixel, &size_line, &endian);
 
-    // render();
+    render(data, size_line, bits_per_pixel);
     // 4. Put image to window
 
     mlx_hook(win, 17, 0, close_window, NULL);
