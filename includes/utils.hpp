@@ -58,26 +58,34 @@ bool intersect_sphere(
     return true;
 }
 
-int compute_lighting(const Vec3& hit, const Vec3& center)
-{
-    Vec3 normal = Vec3(
-        hit.getX() - center.getX(),
-        hit.getY() - center.getY(),
-        hit.getZ() - center.getZ()
-    );
-    normal = normalize(normal);
+// int compute_lighting(const Vec3& hit, const Vec3& center)
+// {
+//     Vec3 normal = Vec3(
+//         hit.getX() - center.getX(),
+//         hit.getY() - center.getY(),
+//         hit.getZ() - center.getZ()
+//     );
+//     normal = normalize(normal);
 
-    Vec3 light_dir = normalize(Vec3(-1, 1, -1));// Vec3(-1, 1, -1) is the direction from the hit point to the light source
+//     Vec3 light_dir = normalize(Vec3(-1, 1, -1));// Vec3(-1, 1, -1) is the direction from the hit point to the light source
 
-    double brightness = Vec3::dot(normal, light_dir);
-    if (brightness < 0)
-        brightness = 0;
+//     double brightness = Vec3::dot(normal, light_dir);
+//     if (brightness < 0)
+//         brightness = 0;
 
-    int c = (int)(brightness * 255.0);
-    return (c << 16) | (c << 8) | c;// Return grayscale color based on brightness (move the c value to the red, green, and blue channels)
-}
+//     int c = (int)(brightness * 255.0);
+//     return (c << 16) | (c << 8) | c;// Return grayscale color based on brightness (move the c value to the red, green, and blue channels)
+// }
 
 static inline void write_pixel(void* data, int offset, int color)
 {
     *(unsigned int*)((char*)data + offset) = color;
+}
+
+Vec3 pixel_to_ray(int x, int y)
+{
+    double px = (2.0 * x / IMG_WIDTH) - 1.0;
+    double py = 1.0 - (2.0 * y / IMG_HEIGHT);
+
+    return Vec3(px, py, -1);
 }

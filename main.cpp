@@ -16,16 +16,17 @@ extern "C" {
 # define S 115
 # define D 100
 # define ESC 65307
-
+# define UP 65362
+# define DOWN 65364
+# define LEFT 65361
+# define RIGHT 65363
 
 struct AppState {
     Camera camera;
+    Scene scene;
     void* mlx;
     void* win;
     void* img;
-    void* data;
-    int bpp;
-    int size_line;
 };
 
 
@@ -36,13 +37,7 @@ struct AppState {
 
 /* ========================= RAY ========================= */
 
-Vec3 pixel_to_ray(int x, int y)
-{
-    double px = (2.0 * x / IMG_WIDTH) - 1.0;
-    double py = 1.0 - (2.0 * y / IMG_HEIGHT);
 
-    return Vec3(px, py, -1);
-}
 
 /* ========================= SPHERE ========================= */
 
@@ -51,43 +46,10 @@ Vec3 pixel_to_ray(int x, int y)
 /* ========================= SHADING ========================= */
 
 
-/* ========================= RENDER ========================= */
-
-void render_scene(void* data, int size_line, int bpp, Camera& camera)
-{
-    int bytes = bpp / 8;
-    // std::cout << "Rendering scene with camera at (" << camera.getPosition().getX() << ", " << camera.getPosition().getY() << ", " << camera.getPosition().getZ() << ")\n";
-    Points3 sphere_center(0, 0, -3);
-    double radius = 1.0;
-
-    for (int y = 0; y < IMG_HEIGHT; y++)
-    {
-        for (int x = 0; x < IMG_WIDTH; x++)
-        {
-            int offset = y * size_line + x * bytes;
-
-            Ray ray = camera.getRay(x, y);
-
-            double t;
-            if (intersect_sphere(ray.getOrigin(), ray.getDirection(), sphere_center, radius, t))
-            {
-                Points3 hit = ray.at(t);
-                int color = compute_lighting(hit, sphere_center);
-                write_pixel(data, offset, color);
-            }
-            else
-            {
-                write_pixel(data, offset, 0x000000FF);
-            }
-        }
-    }
-}
-
 
 int key_press(int keycode, void* param)
 {
     AppState* state = (AppState*)param;
-    Scene scene();
 
     // Move camera
     if (keycode == W)
@@ -98,11 +60,20 @@ int key_press(int keycode, void* param)
         state->camera.moveRight(0.1);
     else if (keycode == D)
         state->camera.moveRight(-0.1);
+    else if (keycode == UP)
+        state->scene.moveLightForward(0.1);
+    else if (keycode == DOWN)
+        state->scene.moveLightForward(-0.1);
+    else if (keycode == LEFT)
+        state->scene.moveLightRight(-0.1);
+    else if (keycode == RIGHT)
+        state->scene.moveLightRight(0.1);
     else if (keycode == ESC)
         exit(0);
 
     // Redraw the scene with updated camera
-    render_scene(state->data, state->size_line, state->bpp, state->camera);
+    // render_scene(state->data, state->size_line, state->bpp, state->camera);
+    state->scene.render(state->camera);
     mlx_put_image_to_window(state->mlx, state->win, state->img, 0, 0);
 
     return 0;
@@ -131,19 +102,19 @@ int main()
     void* win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"MiniRT");
     void* img = mlx_new_image(mlx, IMG_WIDTH, IMG_HEIGHT);
     void* data = mlx_get_data_addr(img, &bpp, &size_line, &endian);
+    Scene scene(size_line, bpp, data);
 
     // App state
     AppState state;
     state.camera = Camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
+    state.scene = scene;
     state.mlx = mlx;
     state.win = win;
     state.img = img;
-    state.data = data;
-    state.bpp = bpp;
-    state.size_line = size_line;
 
     // First render
-    render_scene(state.data, state.size_line, state.bpp, state.camera);
+    // render_scene(state.data, state.size_line, state.bpp, state.camera);
+    scene.render(state.camera);
     mlx_put_image_to_window(mlx, win, img, 0, 0);
 
     // Hook keys
