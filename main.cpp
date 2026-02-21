@@ -9,7 +9,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include "srcs/utils.cpp"
+#include "includes/Scene.hpp"
 
 # define W 119
 # define A 97
@@ -87,6 +87,7 @@ void render_scene(void* data, int size_line, int bpp, Camera& camera)
 int key_press(int keycode, void* param)
 {
     AppState* state = (AppState*)param;
+    Scene scene();
 
     // Move camera
     if (keycode == W)

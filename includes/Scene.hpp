@@ -16,11 +16,12 @@ private:
 public:
     int computeLighting(const Vec3& hit, const Sphere& obj);
     void render(Camera& camera);
-    Scene(/* args */);
+    void addObject(const Sphere& obj);
+    Scene();
     ~Scene();
 };
 
-Scene::Scene(/* args */)
+Scene::Scene()
 {
 }
 
