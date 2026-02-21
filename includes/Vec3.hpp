@@ -23,7 +23,21 @@ public:
     static double dot(const Vec3& v1, const Vec3& v2);
 
     ~Vec3();
-};
+    
+    Vec3 operator+(const Vec3& other)
+    {
+        return Vec3(this->x + other.getX(), this->y + other.getY(), this->z + other.getZ());
+    }
 
+    Vec3 operator-(const Vec3& other)
+    {
+        return Vec3(this->x - other.getX(), this->y - other.getY(), this->z - other.getZ());
+    }
+
+    Vec3 operator*(double scalar)
+    {
+        return Vec3(this->x * scalar, this->y * scalar, this->z * scalar);
+    }
+};
 using Points3 = Vec3;
 
