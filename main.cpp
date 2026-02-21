@@ -9,6 +9,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include "srcs/utils.cpp"
 
 # define W 119
 # define A 97
@@ -31,10 +32,7 @@ struct AppState {
 /* ========================= UTILS ========================= */
 
 
-static inline void write_pixel(void* data, int offset, int color)
-{
-    *(unsigned int*)((char*)data + offset) = color;
-}
+
 
 /* ========================= RAY ========================= */
 
@@ -48,79 +46,17 @@ Vec3 pixel_to_ray(int x, int y)
 
 /* ========================= SPHERE ========================= */
 
-bool intersect_sphere(
-    const Vec3& ray_origin,
-    const Vec3& ray_dir,
-    const Vec3& center,
-    double radius,
-    double& t_hit
-)
-{
-    // Compute the vector from ray origin to sphere center oc = ray_origin - center
-    Vec3 oc = Vec3(
-        ray_origin.getX() - center.getX(),
-        ray_origin.getY() - center.getY(),
-        ray_origin.getZ() - center.getZ()
-    );
-// sphere equation: (P - C) . (P - C) = r^2
-// ray equation: P = O + tD
-// substitute ray into sphere: (O + tD - C) . (O + tD - C) = r^2
-// expand: (O - C) . (O - C) + 2tD . (O - C) + t^2 D . D = r^2
-// rearrange: t^2 D . D + 2t D . (O - C) + (O - C) . (O - C) - r^2 = 0
-// This is a quadratic equation in t: at^2 + bt + c = 0
-// where: a = D . D, b = 2 D . (O - C), c = (O - C) .(O - C) - r^2
-// and ray_dir is D, oc is (O - C)
 
-    double a = Vec3::dot(ray_dir, ray_dir);
-    double b = 2.0 * Vec3::dot(oc, ray_dir);
-    double c = Vec3::dot(oc, oc) - radius*radius;
-
-    double disc = b*b - 4*a*c;
-
-    // No intersection if discriminant is negative
-    // one solution: inside the sphere, two solutions: outside the sphere
-    if (disc <= 0)
-        return false;
-
-    double t1 = (-b - sqrt(disc)) / (2.0 * a);
-    double t2 = (-b + sqrt(disc)) / (2.0 * a);
-    if (t1 > 0)
-        t_hit = t1;
-    else if (t2 > 0)
-        t_hit = t2;
-    else
-        return false; // Both intersections are behind the camera
-    // t_hit = (-b - sqrt(disc)) / (2.0 * a);
-    return true;
-}
 
 /* ========================= SHADING ========================= */
 
-int compute_lighting(const Vec3& hit, const Vec3& center)
-{
-    Vec3 normal = Vec3(
-        hit.getX() - center.getX(),
-        hit.getY() - center.getY(),
-        hit.getZ() - center.getZ()
-    );
-    normal = normalize(normal);
-
-    Vec3 light_dir = normalize(Vec3(-1, 1, -1));// Vec3(-1, 1, -1) is the direction from the hit point to the light source
-
-    double brightness = Vec3::dot(normal, light_dir);
-    if (brightness < 0)
-        brightness = 0;
-
-    int c = (int)(brightness * 255.0);
-    return (c << 16) | (c << 8) | c;// Return grayscale color based on brightness (move the c value to the red, green, and blue channels)
-}
 
 /* ========================= RENDER ========================= */
 
 void render_scene(void* data, int size_line, int bpp, Camera& camera)
 {
     int bytes = bpp / 8;
-    std::cout << "Rendering scene with camera at (" << camera.getPosition().getX() << ", " << camera.getPosition().getY() << ", " << camera.getPosition().getZ() << ")\n";
+    // std::cout << "Rendering scene with camera at (" << camera.getPosition().getX() << ", " << camera.getPosition().getY() << ", " << camera.getPosition().getZ() << ")\n";
     Points3 sphere_center(0, 0, -3);
     double radius = 1.0;
 
@@ -175,40 +111,6 @@ int key_press(int keycode, void* param)
 
 
 
-// void render(void* data, int size_line, int bpp, void* win)
-// {
-//     int bytes = bpp / 8;
-
-
-//      // Ray from camera origin pointing into the scene
-//     Points3 sphere_center = Points3(0,0,-3);
-//     Camera camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
-//     double radius = 1.0;
-
-//     for (int y = 0; y < IMG_HEIGHT; y++)
-//     {
-//         for (int x = 0; x < IMG_WIDTH; x++)
-//         {
-//             int offset = y*size_line + x*bytes;
-            
-//             Ray ray = camera.getRay(x, y);
-            
-//             double t;
-//             if (intersect_sphere(ray.getOrigin(), ray.getDirection(), sphere_center, radius, t))
-//             {
-//                 Points3 hit = ray.at(t);
-                
-//                 int color = compute_lighting(hit, sphere_center);
-//                 write_pixel(data, offset, color);
-//             }
-//             else
-//             {
-//                 write_pixel(data, offset, 0x000000FF);
-//             }
-//         }
-//     }
-//     mlx_hook(win, 2, 1L<<0, (int (*)())key_press, &camera);
-// }
 
 /* ========================= MLX ========================= */
 

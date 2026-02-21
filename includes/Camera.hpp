@@ -5,7 +5,7 @@
 
 # include "Vec3.hpp"
 # include "Ray.hpp"
-# include "../srcs/utils.cpp"
+# include "utils.hpp"
 
 class Camera
 {
