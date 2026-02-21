@@ -8,7 +8,7 @@ extern "C" {
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <iostream>
 
 # define W 119
 # define A 97
@@ -30,11 +30,6 @@ struct AppState {
 
 /* ========================= UTILS ========================= */
 
-static inline Vec3 normalize(Vec3 v)
-{
-    double len = sqrt(Vec3::dot(v, v));
-    return Vec3(v.getX()/len, v.getY()/len, v.getZ()/len);
-}
 
 static inline void write_pixel(void* data, int offset, int color)
 {
@@ -83,10 +78,19 @@ bool intersect_sphere(
     double disc = b*b - 4*a*c;
 
     // No intersection if discriminant is negative
+    // one solution: inside the sphere, two solutions: outside the sphere
     if (disc <= 0)
         return false;
 
-    t_hit = (-b - sqrt(disc)) / (2.0 * a);
+    double t1 = (-b - sqrt(disc)) / (2.0 * a);
+    double t2 = (-b + sqrt(disc)) / (2.0 * a);
+    if (t1 > 0)
+        t_hit = t1;
+    else if (t2 > 0)
+        t_hit = t2;
+    else
+        return false; // Both intersections are behind the camera
+    // t_hit = (-b - sqrt(disc)) / (2.0 * a);
     return true;
 }
 
@@ -116,7 +120,7 @@ int compute_lighting(const Vec3& hit, const Vec3& center)
 void render_scene(void* data, int size_line, int bpp, Camera& camera)
 {
     int bytes = bpp / 8;
-
+    std::cout << "Rendering scene with camera at (" << camera.getPosition().getX() << ", " << camera.getPosition().getY() << ", " << camera.getPosition().getZ() << ")\n";
     Points3 sphere_center(0, 0, -3);
     double radius = 1.0;
 
@@ -149,11 +153,16 @@ int key_press(int keycode, void* param)
     AppState* state = (AppState*)param;
 
     // Move camera
-    if (keycode == W)      state->camera.moveForward(0.1);
-    else if (keycode == S) state->camera.moveForward(-0.1);
-    else if (keycode == A) state->camera.moveRight(-0.1);
-    else if (keycode == D) state->camera.moveRight(0.1);
-    else if (keycode == ESC) exit(0);
+    if (keycode == W)
+        state->camera.moveForward(0.1);
+    else if (keycode == S)
+        state->camera.moveForward(-0.1);
+    else if (keycode == A)
+        state->camera.moveRight(0.1);
+    else if (keycode == D)
+        state->camera.moveRight(-0.1);
+    else if (keycode == ESC)
+        exit(0);
 
     // Redraw the scene with updated camera
     render_scene(state->data, state->size_line, state->bpp, state->camera);
@@ -166,40 +175,40 @@ int key_press(int keycode, void* param)
 
 
 
-void render(void* data, int size_line, int bpp, void* win)
-{
-    int bytes = bpp / 8;
+// void render(void* data, int size_line, int bpp, void* win)
+// {
+//     int bytes = bpp / 8;
 
 
-     // Ray from camera origin pointing into the scene
-    Points3 sphere_center = Points3(0,0,-3);
-    Camera camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
-    double radius = 1.0;
+//      // Ray from camera origin pointing into the scene
+//     Points3 sphere_center = Points3(0,0,-3);
+//     Camera camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
+//     double radius = 1.0;
 
-    for (int y = 0; y < IMG_HEIGHT; y++)
-    {
-        for (int x = 0; x < IMG_WIDTH; x++)
-        {
-            int offset = y*size_line + x*bytes;
+//     for (int y = 0; y < IMG_HEIGHT; y++)
+//     {
+//         for (int x = 0; x < IMG_WIDTH; x++)
+//         {
+//             int offset = y*size_line + x*bytes;
             
-            Ray ray = camera.getRay(x, y);
+//             Ray ray = camera.getRay(x, y);
             
-            double t;
-            if (intersect_sphere(ray.getOrigin(), ray.getDirection(), sphere_center, radius, t))
-            {
-                Points3 hit = ray.at(t);
+//             double t;
+//             if (intersect_sphere(ray.getOrigin(), ray.getDirection(), sphere_center, radius, t))
+//             {
+//                 Points3 hit = ray.at(t);
                 
-                int color = compute_lighting(hit, sphere_center);
-                write_pixel(data, offset, color);
-            }
-            else
-            {
-                write_pixel(data, offset, 0x000000FF);
-            }
-        }
-    }
-    mlx_hook(win, 2, 1L<<0, (int (*)())key_press, &camera);
-}
+//                 int color = compute_lighting(hit, sphere_center);
+//                 write_pixel(data, offset, color);
+//             }
+//             else
+//             {
+//                 write_pixel(data, offset, 0x000000FF);
+//             }
+//         }
+//     }
+//     mlx_hook(win, 2, 1L<<0, (int (*)())key_press, &camera);
+// }
 
 /* ========================= MLX ========================= */
 

@@ -38,6 +38,15 @@ public:
     {
         return Vec3(this->x * scalar, this->y * scalar, this->z * scalar);
     }
+
+    static Vec3 cross(const Vec3& v1, const Vec3& v2)
+    {
+        return Vec3(
+            v1.getY() * v2.getZ() - v1.getZ() * v2.getY(),
+            v1.getZ() * v2.getX() - v1.getX() * v2.getZ(),
+            v1.getX() * v2.getY() - v1.getY() * v2.getX()
+        );
+    }
 };
 using Points3 = Vec3;
 

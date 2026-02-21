@@ -5,6 +5,7 @@
 
 # include "Vec3.hpp"
 # include "Ray.hpp"
+# include "../srcs/utils.cpp"
 
 class Camera
 {
@@ -71,15 +72,20 @@ Ray Camera::getRay(int pixel_x, int pixel_y)
 
 void Camera::moveForward(double amount)
 {
-    this->position = position + direction * amount;
+    Vec3 forward = normalize(this->direction);
+    this->position = this->position + forward * amount;
 }
 
 void Camera::moveRight(double amount)
 {
-    this->position = position + right * amount;
+     // right vector
+    
+    Vec3 right = normalize(Vec3::cross(this->direction, Vec3(0, 1, 0)));// we normalize:  we direction only, not the length.
+    this->position = this->position + right * amount;
 }
 
 void Camera::moveUp(double amount)
 {
-    this->position = position + up * amount;
+    Vec3 up(0,1,0);
+    this->position = this->position + up * amount;
 }
