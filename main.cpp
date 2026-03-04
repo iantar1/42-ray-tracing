@@ -29,24 +29,6 @@ struct AppState {
     void* img;
 };
 
-
-/* ========================= UTILS ========================= */
-
-
-
-
-/* ========================= RAY ========================= */
-
-
-
-/* ========================= SPHERE ========================= */
-
-
-
-/* ========================= SHADING ========================= */
-
-
-
 int key_press(int keycode, void* param)
 {
     AppState* state = (AppState*)param;
@@ -61,9 +43,9 @@ int key_press(int keycode, void* param)
     else if (keycode == D)
         state->camera.moveRight(-0.1);
     else if (keycode == UP)
-        state->scene.moveLightForward(0.1);
+        state->scene.moveLightUpDown(0.1);
     else if (keycode == DOWN)
-        state->scene.moveLightForward(-0.1);
+        state->scene.moveLightUpDown(-0.1);
     else if (keycode == LEFT)
         state->scene.moveLightRight(-0.1);
     else if (keycode == RIGHT)
@@ -80,12 +62,6 @@ int key_press(int keycode, void* param)
 }
 
 
-
-
-
-
-/* ========================= MLX ========================= */
-
 int close_window()
 {
     exit(0);
@@ -99,7 +75,7 @@ int main()
     void* mlx = mlx_init();
     int bpp, size_line, endian;
 
-    void* win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"MiniRT");
+    void* win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"RT");
     void* img = mlx_new_image(mlx, IMG_WIDTH, IMG_HEIGHT);
     void* data = mlx_get_data_addr(img, &bpp, &size_line, &endian);
     Scene scene(size_line, bpp, data);

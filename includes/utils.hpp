@@ -89,3 +89,15 @@ Vec3 pixel_to_ray(int x, int y)
 
     return Vec3(px, py, -1);
 }
+
+// rodrigues' rotation formula: v′= vcosθ + (k×v)sinθ+k(k⋅v)(1−cosθ)
+Vec3 rotateAroundAxis(Vec3 v, Vec3 axis, double theta)
+{
+    axis = normalize(axis);
+
+    Vec3 term1 = v * cos(theta);
+    Vec3 term2 = Vec3::cross(axis, v) * sin(theta);
+    Vec3 term3 = axis * Vec3::dot(axis, v) * (1 - cos(theta));
+
+    return term1 + term2 + term3;
+}

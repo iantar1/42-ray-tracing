@@ -10,6 +10,7 @@ class Scene
 private:
     // it must contain class of types objects, and other objects will inherit from it.
     std::vector<Sphere> objects;
+    Points3 scene_center;
     Points3 light_pos;
     double light_angle;
     int size_line;
@@ -21,13 +22,14 @@ public:
     Scene(int _size_line, int _bytes_per_pixel, void* _image_data);
     ~Scene();
     
+
     int computeLighting(const Vec3& hit, const Sphere& obj);
     void render(Camera& camera);
     void addObject(const Sphere& obj);
     int compute_lighting(const Vec3& hit, const Vec3& center);
     void setLightPos(const Vec3& dir);
 
-    void moveLightForward(double amount);
+    void moveLightUpDown(double amount);
     void moveLightRight(double amount);
     void moveLightUp(double amount);
 };
@@ -39,6 +41,7 @@ Scene::Scene()
 Scene::Scene(int _size_line, int _bytes_per_pixel, void* _image_data)
     : size_line(_size_line), bytes_per_pixel(_bytes_per_pixel), image_data(_image_data), light_pos(Points3(-1, 1, -1)), light_angle(0)
 {
+    scene_center = Points3(0, 0, -3);
 }
 
 Scene::~Scene()
@@ -99,23 +102,19 @@ void Scene::render(Camera& camera)
     }
 }
 
-void Scene::moveLightForward(double amount){
-    // this->light_pos = this->light_pos + Vec3(0, 0, amount);
-    light_angle += amount;
-    light_pos.setX(0 + cos(light_angle)*5);
-    light_pos.setZ(-3 + sin(light_angle)*5);
+// We want to rotate a the light position around an axis passing through the center of the scene.
+void Scene::moveLightUpDown(double amount){
+    // k is the axe of rotation, in this case we want to rotate around the x axis, so k = (1, 0, 0)
+    // this->light_angle += amount;
+    this->light_pos = rotateAroundAxis(this->light_pos - scene_center, Vec3(1, 0, 0), amount) + scene_center;
+
+    // v′= vcosθ + (k×v)sinθ+k(k⋅v)(1−cosθ)
 }
 
 void Scene::moveLightRight(double amount){
-    // this->light_pos = this->light_pos + Vec3(amount, 0, 0);
-    light_angle += amount;
-    light_pos.setX(0 + cos(light_angle)*5);
-    light_pos.setZ(-3 + sin(light_angle)*5);
-}
+    // k is the axe of rotation, in this case we want to rotate around the y axis, so k = (0, 1, 0)
+    // this->light_angle += amount;
+    this->light_pos = rotateAroundAxis(this->light_pos - scene_center, Vec3(0, 1, 0), amount) + scene_center;
 
-void Scene::moveLightUp(double amount){
-    // this->light_pos = this->light_pos + Vec3(0, amount, 0);
-    light_angle += amount;
-    light_pos.setY(light_pos.getY() + amount);
-    light_pos.setZ(-3 + sin(light_angle)*5);
+    // v′= vcosθ + (k×v)sinθ+k(k⋅v)(1−cosθ) 
 }

@@ -63,8 +63,8 @@ void Camera::setDirection(const Vec3 _direction)
 
 Ray Camera::getRay(int pixel_x, int pixel_y)
 {
-    double px = (2.0 * pixel_x / IMG_WIDTH) - 1.0;
-    double py = 1.0 - (2.0 * pixel_y / IMG_HEIGHT);
+    double px = (2.0 * pixel_x / IMG_WIDTH) - 1.0;// we want to map pixel_x from [0, IMG_WIDTH] to [-1, 1]
+    double py = 1.0 - (2.0 * pixel_y / IMG_HEIGHT);// we want to map pixel_y from [0, IMG_HEIGHT] to [1, -1]
 
     Vec3 ray_dir(px, py, -1);
     return Ray(position, ray_dir);
