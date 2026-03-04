@@ -62,13 +62,25 @@ int key_press(int keycode, void* param)
 }
 
 
-int close_window()
+int close_window(void* param)
 {
-    exit(0);
+    AppState* state = (AppState*)param;
+    mlx_destroy_image(state->mlx, state->img);
+    mlx_destroy_window(state->mlx, state->win);
+    mlx_destroy_display(state->mlx);
+    free(state->mlx);
+    // exit(0);
     return 0;
 }
 
 
+int expose_hook(void* param)
+{
+    AppState* state = (AppState*)param;
+    mlx_put_image_to_window(state->mlx, state->win, state->img, 0, 0);
+    std::cout << "Exposing window\n";
+    return 0;
+}
 
 int main()
 {
@@ -95,7 +107,9 @@ int main()
 
     // Hook keys
     mlx_hook(win, 2, 1L<<0, (int (*)())key_press, &state);
-    mlx_hook(win, 17, 0, close_window, NULL);
+    mlx_hook(win, 17, 0, (int (*)())close_window, &state);
+    // Expose event (when the window must be repainted). Mask must not be 0.
+    mlx_hook(win, 12, 1L<<15, (int (*)())expose_hook, &state);
 
     mlx_loop(mlx);
 }

@@ -1,78 +1,114 @@
-# miniRT / Ray Tracing — Task log
+```markdown
+# miniRT — checklist from the subject (v4.1)
 
-This file tracks what’s already implemented in this repo and what’s still pending.
+This checklist is derived from the **miniRT “Ray Tracer”** subject PDF (March 2026, version 4.1).
 
-> Update rule: when you finish something, tick it here and (optionally) drop a short note / commit hash.
+Notes from the subject:
 
-## ✅ Done (implemented in this repo)
+- **Mandatory must be perfect** before anything else is evaluated.
+- Options/bonuses are only considered if the mandatory part is 100% correct.
+- Allowed languages: **C / C++ / Rust**.
+- Rendering must be **CPU ray tracing** (no GPU raster pipeline like OpenGL/Metal/Vulkan/DirectX).
+- You may use **MiniLibX** (or equivalent) to open a window, draw pixels, display an image, manage events.
+- No memory leaks.
 
-### Build & project setup
-- [x] `Makefile` builds `minilibx-linux` and links X11 libs
-- [x] `install` target for common Linux deps
+> Update rule: when you finish something, tick it and add a short note / commit hash.
 
-### Windowing / display (MiniLibX)
-- [x] Initialize MLX, create window, create image buffer
-- [x] Write pixels directly into the MLX image buffer
-- [x] Display the rendered image via `mlx_put_image_to_window`
-- [x] Handle window close event (X button)
+## ✅ General requirements (always)
 
-### Camera
-- [x] Basic camera struct/class (position + direction + FOV)
-- [x] Generate rays per pixel (`Camera::getRay`)
-- [x] Camera movement with keyboard: `W/A/S/D`
+- [x] Executable is named **`rt`**.
+- [ ] No memory leaks (valgrind clean when exiting normally).
+- [x] Uses CPU ray tracing (no forbidden GPU rendering pipeline).
+- [x] Uses allowed libs for mandatory: libc / libstdc++ (or Rust equivalents) + libm + MiniLibX.
+- [x] Window opens and displays the rendered image.
 
-### Ray/object intersection
-- [x] Sphere intersection (`intersect_sphere`) for a single sphere
+## 🧱 Mandatory part (must be flawless)
 
-### Shading / lighting
-- [x] Compute sphere normal at hit point
-- [x] Lambert/diffuse grayscale shading using dot(normal, lightDir)
-- [x] Movable light source (keyboard arrows)
+### Core ray tracer
 
-### Rendering
-- [x] Per-pixel render loop over `IMG_WIDTH` × `IMG_HEIGHT`
-- [x] Background color when no hit
+- [x] Implement ray tracing to generate an image of a 3D scene.
+- [ ] Scene contains **simple geometric objects** + **light sources**.
+- [x] Camera/eye position and direction are easy to change.
 
-## 🚧 Remaining (next tasks)
+### Required primitives (at least these 4)
 
-### Project spec: .rt scene parsing (mandatory in miniRT)
-- [ ] Parse a `.rt` file from argv (reject missing/extra args)
-- [ ] Strict format validation + clear error messages
-- [ ] Support required entities:
-  - [ ] Ambient light: `A <ratio> <R,G,B>`
-  - [ ] Camera: `C <pos> <dir> <fov>`
-  - [ ] Light: `L <pos> <brightness> <R,G,B>`
-  - [ ] Sphere: `sp <pos> <diameter> <R,G,B>`
-  - [ ] Plane: `pl <pos> <normal> <R,G,B>`
-  - [ ] Cylinder: `cy <pos> <axis> <diameter> <height> <R,G,B>`
-- [ ] Range checks (normalized vectors, FOV 0–180, colors 0–255, ratios 0–1, etc.)
+Implement intersection + surface normals + shading support for:
 
-### Geometry
-- [ ] Support multiple objects in a scene (iterate + closest hit)
-- [ ] Plane intersection
-- [ ] Cylinder intersection (+ caps if required by your interpretation)
-- [ ] Surface normal for plane/cylinder
+- [x] Sphere
+- [ ] Plane
+- [ ] Cylinder
+- [ ] Cone
 
-### Materials / color
-- [ ] Per-object RGB color (not just grayscale)
-- [ ] Ambient + diffuse light contribution (use ambient entity)
-- [ ] Specular highlight (if you want, not always mandatory)
-- [ ] Shadows (occlusion test between hit point and light)
+### Transformations
 
-### Controls / UX
-- [ ] Clean exit: free MLX resources / destroy image & window
-- [ ] Optional: camera rotation (look left/right/up/down)
-- [ ] Optional: redraw throttling / continuous loop hook
+- [ ] Objects support **translation** before rendering.
+- [ ] Objects support **rotation** before rendering.
 
-### Code health
-- [ ] Stop including `.cpp` files in `main.cpp` (compile via Makefile instead)
-- [ ] Split headers/impl (`Scene.hpp` currently contains implementation)
-- [ ] Warnings: enable `-Wall -Wextra -Werror` and fix issues
+### Display / performance behavior
 
-### Bonus ideas (optional)
-- [ ] Multiple lights
-- [ ] Reflections (recursive rays)
-- [ ] Anti-aliasing / supersampling
-- [ ] Textures / checkerboard
-- [ ] BVH / acceleration structure
-- [ ] Multithreading
+- [x] Can **redraw** the view (or part of it) **without recalculating the entire image**.
+  - [x] MiniLibX: handle expose event properly (re-put existing image buffer).
+
+### Light management (mandatory expectations)
+
+- [x] Different light brightness is supported.
+- [ ] Shadows are implemented.
+- [ ] Multiple spot lights supported.
+- [ ] “Shine effect” implemented (specular highlight / glossy look).
+
+### Mandatory validation scenes (strongly advised by subject)
+
+Reproduce at least these three scenes to ease evaluation:
+
+- [ ] Scene 1: the 4 basic objects + 2 spots + shadows + shine
+- [ ] Scene 2: same scene from a different viewpoint
+- [ ] Scene 3: shadow mixing
+
+## 🧩 Options (only graded if mandatory is PERFECT)
+
+The subject lists options as examples (not an exhaustive list). Pick a set you can defend live.
+
+Lighting options:
+
+- [ ] Ambient light
+- [ ] Direct light
+- [ ] Parallel light
+
+Geometry options:
+
+- [ ] Limited objects (parallelograms, disks, half-spheres, tubes…)
+- [ ] Composed elements (cubes, pyramids, tetrahedrons…)
+- [ ] More “native” elements (paraboloid, hyperboloid, toroid…)
+
+Material / appearance options:
+
+- [ ] Textures
+- [ ] Bump mapping / colour disruption
+- [ ] Reflection
+- [ ] Transparency
+- [ ] Shadow modification according to transparency
+- [ ] Negative elements
+- [ ] Limit disruption / transparency / reflection depending on texture
+
+Scene tooling options:
+
+- [ ] External files for scene description
+- [ ] In-program live configuration / modifications (for defence)
+
+⚠️ Note from subject:
+
+- If you parse `.pov` / `.3ds`, mandatory objects must still be handled from **equations** (not triangles/vertices).
+
+## ⭐ Bonuses (extra credit)
+
+- [ ] Add outstanding extra features beyond the “options” list.
+- [ ] (If used) justify any extra libraries during defence.
+- [ ] (Optional) Performance work (e.g., GPU computing via OpenCL/CUDA/compute shaders) — allowed for performance.
+
+## 🧪 Self-check before you push
+
+- [ ] Render is deterministic for the same scene/camera.
+- [ ] No crashes on window close / after repeated expose events.
+- [ ] Scenes used for evaluation are easy to load/switch during defence.
+
+```
