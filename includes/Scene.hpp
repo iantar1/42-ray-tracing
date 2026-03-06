@@ -4,18 +4,24 @@
 #include "Camera.hpp"
 #include "utils.hpp"
 #include <algorithm>
+# include "Objects.hpp"
+
+# define BACKGROUND_COLOR 0x00FFFFFF
 
 class Scene
 {
 private:
     // it must contain class of types objects, and other objects will inherit from it.
-    std::vector<Sphere> objects;
+    std::vector<Objects> objects;
     Points3 scene_center;
     Points3 light_pos;
     double light_angle;
     int size_line;
     int bytes_per_pixel;
     void* image_data;
+
+    // std::vector<Objects> objects;
+
 public:
 
     Scene();
@@ -25,8 +31,8 @@ public:
 
     int computeLighting(const Vec3& hit, const Sphere& obj);
     void render(Camera& camera);
-    void addObject(const Sphere& obj);
-    int compute_lighting(const Vec3& hit, const Vec3& center);
+    void addObject(Objects& obj);
+    int compute_lighting(const Vec3& hit,  Objects& obj);
     void setLightPos(const Vec3& dir);
 
     void moveLightUpDown(double amount);
@@ -53,13 +59,9 @@ void Scene::setLightPos(const Points3& pos) {
     this->light_pos = Points3(pos.getX(), pos.getY(), pos.getZ());
 }
     
-int Scene::compute_lighting(const Vec3& hit, const Vec3& center)
+int Scene::compute_lighting(const Vec3& hit, Objects& obj)
 {
-    Vec3 normal = Vec3(
-        hit.getX() - center.getX(),
-        hit.getY() - center.getY(),
-        hit.getZ() - center.getZ()
-    );
+    Vec3 normal = obj.get_normal(hit);
     normal = normalize(normal);
 
     // Vec3 light_dir = normalize(Vec3(-1, 1, -1));// Vec3(-1, 1, -1) is the direction from the hit point to the light source
@@ -75,29 +77,30 @@ int Scene::compute_lighting(const Vec3& hit, const Vec3& center)
 void Scene::render(Camera& camera)
 {
     int bytes = this->bytes_per_pixel / 8;
-    // std::cout << "Rendering scene with camera at (" << camera.getPosition().getX() << ", " << camera.getPosition().getY() << ", " << camera.getPosition().getZ() << ")\n";
-    Points3 sphere_center(0, 0, -3);
-    double radius = 1.0;
 
     for (int y = 0; y < IMG_HEIGHT; y++)
     {
         for (int x = 0; x < IMG_WIDTH; x++)
         {
             int offset = y * this->size_line + x * bytes;
-
-            Ray ray = camera.getRay(x, y);
-
-            double t;
-            if (intersect_sphere(ray.getOrigin(), ray.getDirection(), sphere_center, radius, t))
+            int color = BACKGROUND_COLOR;
+            double closest_t = std::numeric_limits<double>::max();
+            for (Objects& obj : objects)
             {
-                Points3 hit = ray.at(t);
-                int color = this->compute_lighting(hit, sphere_center);
-                write_pixel(image_data, offset, color);
+                Ray ray = camera.getRay(x, y);
+    
+                double t;
+                if (obj.intersect(ray, t))
+                {
+                    Points3 hit = ray.at(t);
+                    if (t < closest_t)
+                    {
+                        closest_t = t;
+                        color = this->compute_lighting(hit, obj);
+                    }
+                }
             }
-            else
-            {
-                write_pixel(image_data, offset, 0x000000FF);
-            }
+            write_pixel(image_data, offset, color);
         }
     }
 }
@@ -117,4 +120,9 @@ void Scene::moveLightRight(double amount){
     this->light_pos = rotateAroundAxis(this->light_pos - scene_center, Vec3(0, 1, 0), amount) + scene_center;
 
     // v′= vcosθ + (k×v)sinθ+k(k⋅v)(1−cosθ) 
+}
+
+void Scene::addObject(Objects& obj)
+{
+    objects.push_back(obj);
 }

@@ -29,6 +29,17 @@ struct AppState {
     void* img;
 };
 
+int close_window(void* param)
+{
+    AppState* state = (AppState*)param;
+    mlx_destroy_image(state->mlx, state->img);
+    mlx_destroy_window(state->mlx, state->win);
+    mlx_destroy_display(state->mlx);
+    free(state->mlx);
+    exit(0);
+    return 0;
+}
+
 int key_press(int keycode, void* param)
 {
     AppState* state = (AppState*)param;
@@ -51,7 +62,10 @@ int key_press(int keycode, void* param)
     else if (keycode == RIGHT)
         state->scene.moveLightRight(0.1);
     else if (keycode == ESC)
-        exit(0);
+    {
+        close_window(param);
+        return 0;
+    }
 
     // Redraw the scene with updated camera
     // render_scene(state->data, state->size_line, state->bpp, state->camera);
@@ -62,16 +76,7 @@ int key_press(int keycode, void* param)
 }
 
 
-int close_window(void* param)
-{
-    AppState* state = (AppState*)param;
-    mlx_destroy_image(state->mlx, state->img);
-    mlx_destroy_window(state->mlx, state->win);
-    mlx_destroy_display(state->mlx);
-    free(state->mlx);
-    // exit(0);
-    return 0;
-}
+
 
 
 int expose_hook(void* param)
@@ -102,7 +107,9 @@ int main()
 
     // First render
     // render_scene(state.data, state.size_line, state.bpp, state.camera);
-    scene.render(state.camera);
+    state.scene.addObject(Sphere(1.0, Points3(0, 0, -3)));
+    state.scene.addObject(Sphere(1.0, Points3(2, 1, -5)));
+    state.scene.render(state.camera);
     mlx_put_image_to_window(mlx, win, img, 0, 0);
 
     // Hook keys
