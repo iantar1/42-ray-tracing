@@ -5,6 +5,7 @@
 #include "utils.hpp"
 #include <algorithm>
 # include "Objects.hpp"
+#include <memory>
 
 # define BACKGROUND_COLOR 0x00FFFFFF
 
@@ -12,7 +13,7 @@ class Scene
 {
 private:
     // it must contain class of types objects, and other objects will inherit from it.
-    std::vector<Objects> objects;
+    std::vector<std::unique_ptr<Objects>> objects;
     Points3 scene_center;
     Points3 light_pos;
     double light_angle;
@@ -25,19 +26,23 @@ private:
 public:
 
     Scene();
+    Scene(const Scene&) = delete;// Delete copy — Scene cannot be copied (because unique_ptr can't)
+    Scene& operator=(const Scene&) = delete;
     Scene(int _size_line, int _bytes_per_pixel, void* _image_data);
     ~Scene();
     
 
     int computeLighting(const Vec3& hit, const Sphere& obj);
     void render(Camera& camera);
-    void addObject(Objects& obj);
-    int compute_lighting(const Vec3& hit,  Objects& obj);
+    void addObject(std::unique_ptr<Objects> obj);
+    int compute_lighting(const Vec3& hit,  std::unique_ptr<Objects>& obj);
     void setLightPos(const Vec3& dir);
 
     void moveLightUpDown(double amount);
     void moveLightRight(double amount);
     void moveLightUp(double amount);
+
+    void    init();//put all the shit that creaet the win and img ... just cut and past code form main
 };
 
 Scene::Scene()
@@ -59,9 +64,9 @@ void Scene::setLightPos(const Points3& pos) {
     this->light_pos = Points3(pos.getX(), pos.getY(), pos.getZ());
 }
     
-int Scene::compute_lighting(const Vec3& hit, Objects& obj)
+int Scene::compute_lighting(const Vec3& hit, std::unique_ptr<Objects>& obj)
 {
-    Vec3 normal = obj.get_normal(hit);
+    Vec3 normal = obj->get_normal(hit);
     normal = normalize(normal);
 
     // Vec3 light_dir = normalize(Vec3(-1, 1, -1));// Vec3(-1, 1, -1) is the direction from the hit point to the light source
@@ -85,12 +90,12 @@ void Scene::render(Camera& camera)
             int offset = y * this->size_line + x * bytes;
             int color = BACKGROUND_COLOR;
             double closest_t = std::numeric_limits<double>::max();
-            for (Objects& obj : objects)
+            for (std::unique_ptr<Objects>& obj : objects)
             {
                 Ray ray = camera.getRay(x, y);
     
                 double t;
-                if (obj.intersect(ray, t))
+                if (obj->intersect(ray, t))
                 {
                     Points3 hit = ray.at(t);
                     if (t < closest_t)
@@ -122,7 +127,7 @@ void Scene::moveLightRight(double amount){
     // v′= vcosθ + (k×v)sinθ+k(k⋅v)(1−cosθ) 
 }
 
-void Scene::addObject(Objects& obj)
+void Scene::addObject(std::unique_ptr<Objects> obj)
 {
-    objects.push_back(obj);
+    objects.push_back(std::move(obj));
 }

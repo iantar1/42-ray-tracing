@@ -107,8 +107,8 @@ int main()
 
     // First render
     // render_scene(state.data, state.size_line, state.bpp, state.camera);
-    state.scene.addObject(Sphere(1.0, Points3(0, 0, -3)));
-    state.scene.addObject(Sphere(1.0, Points3(2, 1, -5)));
+    state.scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
+    state.scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5))));
     state.scene.render(state.camera);
     mlx_put_image_to_window(mlx, win, img, 0, 0);
 
