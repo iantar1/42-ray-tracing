@@ -17,23 +17,32 @@ private:
     Points3 scene_center;
     Points3 light_pos;
     double light_angle;
-    int size_line;
     int bytes_per_pixel;
     void* image_data;
-
+    
+    int bpp;
+    int size_line;
+    int     endian;
+    // void* data;
+    
     // std::vector<Objects> objects;
-
+    
 public:
+    void*   mlx;
+    void*   win;
+    void*   img;
 
     Scene();
     Scene(const Scene&) = delete;// Delete copy — Scene cannot be copied (because unique_ptr can't)
     Scene& operator=(const Scene&) = delete;
     Scene(int _size_line, int _bytes_per_pixel, void* _image_data);
+    Scene(void*);
     ~Scene();
+    Camera camera;
     
-
+    
     int computeLighting(const Vec3& hit, const Sphere& obj);
-    void render(Camera& camera);
+    void render();
     void addObject(std::unique_ptr<Objects> obj);
     int compute_lighting(const Vec3& hit,  std::unique_ptr<Objects>& obj);
     void setLightPos(const Vec3& dir);
@@ -49,11 +58,22 @@ Scene::Scene()
 {
 }
 
-Scene::Scene(int _size_line, int _bytes_per_pixel, void* _image_data)
-    : size_line(_size_line), bytes_per_pixel(_bytes_per_pixel), image_data(_image_data), light_pos(Points3(-1, 1, -1)), light_angle(0)
+Scene::Scene(void* _mlx): mlx(_mlx), light_pos(Points3(-1, 1, -1)), scene_center(Points3(0, 0, -3)), light_angle(0), bytes_per_pixel(0)
 {
-    scene_center = Points3(0, 0, -3);
 }
+
+void    Scene::init() {
+    this->win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"RT");
+    this->img = mlx_new_image(mlx, IMG_WIDTH, IMG_HEIGHT);
+    this->image_data = mlx_get_data_addr(img, &bpp, &size_line, &endian);
+    this->camera = Camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
+}
+
+// Scene::Scene(int _size_line, int _bytes_per_pixel, void* _image_data)
+//     : size_line(_size_line), bytes_per_pixel(_bytes_per_pixel), image_data(_image_data), light_pos(Points3(-1, 1, -1)), light_angle(0)
+// {
+//     scene_center = Points3(0, 0, -3);
+// }
 
 Scene::~Scene()
 {
@@ -79,9 +99,9 @@ int Scene::compute_lighting(const Vec3& hit, std::unique_ptr<Objects>& obj)
     return (c << 16) | (c << 8) | c;// Return grayscale color based on brightness (move the c value to the red, green, and blue channels)
 }
 
-void Scene::render(Camera& camera)
+void Scene::render()
 {
-    int bytes = this->bytes_per_pixel / 8;
+    int bytes = this->bpp / 8;
 
     for (int y = 0; y < IMG_HEIGHT; y++)
     {
@@ -108,6 +128,7 @@ void Scene::render(Camera& camera)
             write_pixel(image_data, offset, color);
         }
     }
+
 }
 
 // We want to rotate a the light position around an axis passing through the center of the scene.

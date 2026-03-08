@@ -31,36 +31,36 @@ struct AppState {
 
 int close_window(void* param)
 {
-    AppState* state = (AppState*)param;
-    mlx_destroy_image(state->mlx, state->img);
-    mlx_destroy_window(state->mlx, state->win);
-    mlx_destroy_display(state->mlx);
-    free(state->mlx);
+    Scene* scene = (Scene*)param;
+    mlx_destroy_image(scene->mlx, scene->img);
+    mlx_destroy_window(scene->mlx, scene->win);
+    mlx_destroy_display(scene->mlx);
+    free(scene->mlx);
     exit(0);
     return 0;
 }
 
 int key_press(int keycode, void* param)
 {
-    AppState* state = (AppState*)param;
+    Scene* scene = (Scene*)param;
 
     // Move camera
     if (keycode == W)
-        state->camera.moveForward(0.1);
+        scene->camera.moveForward(0.1);
     else if (keycode == S)
-        state->camera.moveForward(-0.1);
+        scene->camera.moveForward(-0.1);
     else if (keycode == A)
-        state->camera.moveRight(0.1);
+        scene->camera.moveRight(0.1);
     else if (keycode == D)
-        state->camera.moveRight(-0.1);
+        scene->camera.moveRight(-0.1);
     else if (keycode == UP)
-        state->scene.moveLightUpDown(0.1);
+        scene->moveLightUpDown(0.1);
     else if (keycode == DOWN)
-        state->scene.moveLightUpDown(-0.1);
+        scene->moveLightUpDown(-0.1);
     else if (keycode == LEFT)
-        state->scene.moveLightRight(-0.1);
+        scene->moveLightRight(-0.1);
     else if (keycode == RIGHT)
-        state->scene.moveLightRight(0.1);
+        scene->moveLightRight(0.1);
     else if (keycode == ESC)
     {
         close_window(param);
@@ -69,8 +69,8 @@ int key_press(int keycode, void* param)
 
     // Redraw the scene with updated camera
     // render_scene(state->data, state->size_line, state->bpp, state->camera);
-    state->scene.render(state->camera);
-    mlx_put_image_to_window(state->mlx, state->win, state->img, 0, 0);
+    scene->render();
+    mlx_put_image_to_window(scene->mlx, scene->win, scene->img, 0, 0);
 
     return 0;
 }
@@ -81,8 +81,8 @@ int key_press(int keycode, void* param)
 
 int expose_hook(void* param)
 {
-    AppState* state = (AppState*)param;
-    mlx_put_image_to_window(state->mlx, state->win, state->img, 0, 0);
+    Scene* scene = (Scene*)param;
+    mlx_put_image_to_window(scene->mlx, scene->win, scene->img, 0, 0);
     std::cout << "Exposing window\n";
     return 0;
 }
@@ -90,33 +90,35 @@ int expose_hook(void* param)
 int main()
 {
     void* mlx = mlx_init();
-    int bpp, size_line, endian;
+    // int bpp, size_line, endian;
 
-    void* win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"RT");
-    void* img = mlx_new_image(mlx, IMG_WIDTH, IMG_HEIGHT);
-    void* data = mlx_get_data_addr(img, &bpp, &size_line, &endian);
-    Scene scene(size_line, bpp, data);
-
+    // void* win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"RT");
+    // void* img = mlx_new_image(mlx, IMG_WIDTH, IMG_HEIGHT);
+    // void* data = mlx_get_data_addr(img, &bpp, &size_line, &endian);
+    // Scene scene(size_line, bpp, data);
+    Scene scene(mlx);
+    scene.init();
+    
     // App state
-    AppState state;
-    state.camera = Camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
-    state.scene = scene;
-    state.mlx = mlx;
-    state.win = win;
-    state.img = img;
-
+    // AppState state;
+    // state.camera = Camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
+    // state.scene = scene;
+    // state.mlx = mlx;
+    // state.win = win;
+    // state.img = img;
+    
     // First render
     // render_scene(state.data, state.size_line, state.bpp, state.camera);
-    state.scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
-    state.scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5))));
-    state.scene.render(state.camera);
-    mlx_put_image_to_window(mlx, win, img, 0, 0);
-
+    scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
+    scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5))));
+    scene.render();
+    mlx_put_image_to_window(scene.mlx, scene.win, scene.img, 0, 0);
+    
     // Hook keys
-    mlx_hook(win, 2, 1L<<0, (int (*)())key_press, &state);
-    mlx_hook(win, 17, 0, (int (*)())close_window, &state);
+    mlx_hook(scene.win, 2, 1L<<0, (int (*)())key_press, &scene);
+    mlx_hook(scene.win, 17, 0, (int (*)())close_window, &scene);
     // Expose event (when the window must be repainted). Mask must not be 0.
-    mlx_hook(win, 12, 1L<<15, (int (*)())expose_hook, &state);
+    mlx_hook(scene.win, 12, 1L<<15, (int (*)())expose_hook, &scene);
 
-    mlx_loop(mlx);
+    mlx_loop(scene.mlx);
 }

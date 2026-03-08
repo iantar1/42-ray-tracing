@@ -3,7 +3,7 @@ MLX_DIR = minilibx-linux
 MLX_LIB = $(MLX_DIR)/libmlx.a
 MLX_FLAGS = -L$(MLX_DIR) -lmlx -lXext -lX11 -lm -lz
 CXX = g++
-# CXXFLAGS = -Wall -Wextra -Werror
+CXXFLAGS =  -fsanitize=address
 SRC = main.cpp
 OBJ = $(SRC:.cpp=.o)
 DEP = $(OBJ:.o=.d)

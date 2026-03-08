@@ -13,6 +13,7 @@ public:
     ~Plane();
 
     bool intersect(const Ray& ray, double& t_hit);
+    Vec3    get_normal();
 };
 
 Plane::Plane(const Vec3& _normal, const Points3& _point)
