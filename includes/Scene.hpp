@@ -7,7 +7,7 @@
 # include "Objects.hpp"
 #include <memory>
 
-# define BACKGROUND_COLOR 0x00FFFFFF
+# define BACKGROUND_COLOR 0x0000FF
 
 class Scene
 {

@@ -10,6 +10,7 @@ extern "C" {
 #include <stdio.h>
 #include <iostream>
 #include "includes/Scene.hpp"
+# include "includes/Plane.hpp"
 
 # define W 119
 # define A 97
@@ -111,6 +112,9 @@ int main()
     // render_scene(state.data, state.size_line, state.bpp, state.camera);
     scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
     scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5))));
+    scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 0, 1), Points3(2, 1, -6))));
+    scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 1, 0), Points3(3, -1, -6))));
+    scene.addObject(std::make_unique<Plane>(Plane(Vec3(1, 0, 0), Points3(-2, 0, -1))));
     scene.render();
     mlx_put_image_to_window(scene.mlx, scene.win, scene.img, 0, 0);
     
