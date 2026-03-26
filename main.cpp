@@ -1,6 +1,7 @@
 #include "srcs/Vec3.cpp"
 # include "includes/Camera.hpp"
 # include "includes/Ray.hpp"
+#include "includes/Cylinder.hpp"
 extern "C" {
     #include "minilibx-linux/mlx.h"
 }
@@ -112,6 +113,7 @@ int main()
     // render_scene(state.data, state.size_line, state.bpp, state.camera);
     scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
     scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5))));
+    scene.addObject(std::make_unique<Cylinder>(Cylinder(Points3(0, 0, -2), Vec3(0, 1, 0), 0.5, 1.5)));
     scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 0, 1), Points3(2, 1, -6))));
     scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 1, 0), Points3(3, -1, -6))));
     scene.addObject(std::make_unique<Plane>(Plane(Vec3(1, 0, 0), Points3(-2, 0, -1))));
