@@ -31,45 +31,43 @@ Cylinder::~Cylinder()
 
 
 bool    Cylinder::intersect(const Ray& ray, double& t_hit) {
-    // Cylinder equation: x² + z² = r² (aligned along y-axis)
-    // Ray equation: P(t) = O + t*D = (Ox+tDx, Oy+tDy, Oz+tDz)
-    // Substitute into cylinder equation (ignoring y):
-    // (Ox+tDx)² + (Oz+tDz)² = r²
-    // Expand: (Dx²+Dz²)t² + 2(Ox*Dx+Oz*Dz)t + (Ox²+Oz²-r²) = 0
-    // This is quadratic: at² + bt + c = 0
-    
+    // General cylinder intersection with arbitrary axis
+    // Project ray onto plane perpendicular to axis, then solve quadratic
+
     Vec3 O = ray.getOrigin();
     Vec3 D = ray.getDirection();
-    
-    double Ox = O.getX() - center.getX();
-    double Oz = O.getZ() - center.getZ();
-    double Dx = D.getX();
-    double Dz = D.getZ();
-    
-    // Quadratic coefficients
-    double a = Dx*Dx + Dz*Dz;
-    if (a < 1e-8) return false;  // Ray parallel to y-axis
-    
-    double b = 2.0 * (Ox*Dx + Oz*Dz);
-    double c = Ox*Ox + Oz*Oz - radius*radius;
-    
-    // Solve quadratic
+
+    // Vector from cylinder center to ray origin
+    Vec3 oc = O - this->center;
+
+    // Project ray direction and origin onto plane perpendicular to axis
+    Vec3 D_perp = D - this->axis * Vec3::dot(D, this->axis);
+    Vec3 oc_perp = oc - this->axis * Vec3::dot(oc, this->axis);
+
+    // Quadratic coefficients for intersection with infinite cylinder
+    double a = Vec3::dot(D_perp, D_perp);
+    if (a < 1e-8) return false;  // Ray parallel to cylinder axis
+
+    double b = 2.0 * Vec3::dot(oc_perp, D_perp);
+    double c = Vec3::dot(oc_perp, oc_perp) - radius * radius;
+
+    // Solve quadratic equation: a*t² + b*t + c = 0
     double discriminant = b*b - 4.0*a*c;
     if (discriminant < 0.0) return false;
-    
+
     double sqrt_disc = std::sqrt(discriminant);
     double t0 = (-b - sqrt_disc) / (2.0*a);
     double t1 = (-b + sqrt_disc) / (2.0*a);
-    
+
     // Pick smallest positive t
     double t = (t0 > 1e-6) ? t0 : t1;
     if (t < 1e-6) return false;
-    
-    // Clamp to finite cylinder height (along y-axis)
+
+    // Clamp to finite cylinder height along the axis
     Vec3 hit_point = O + D * t;
-    double y_projection = hit_point.getY() - center.getY();
-    if (std::abs(y_projection) > half_height) return false;
-    
+    double axis_projection = Vec3::dot(hit_point - center, this->axis);
+    if (std::abs(axis_projection) > half_height) return false;
+
     t_hit = t;
     return true;
 }
