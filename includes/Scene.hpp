@@ -52,6 +52,8 @@ public:
     void moveLightRight(double amount);
     void moveLightUp(double amount);
 
+    Objects* getClickedObject(int x, int y);
+
     void    init();//put all the shit that creaet the win and img ... just cut and past code form main
 };
 
@@ -195,4 +197,25 @@ void Scene::moveLightRight(double amount){
 void Scene::addObject(std::unique_ptr<Objects> obj)
 {
     objects.push_back(std::move(obj));
+}
+
+Objects* Scene::getClickedObject(int x, int y)
+{
+    Ray ray = camera.getRay(x, y);
+    double closest_t = std::numeric_limits<double>::max();
+    Objects* clicked_obj = nullptr;
+    
+    for (std::unique_ptr<Objects>& obj : objects)
+    {
+        double t;
+        if (obj->intersect(ray, t))
+        {
+            if (t < closest_t && t > 0)
+            {
+                closest_t = t;
+                clicked_obj = obj.get();
+            }
+        }
+    }
+    return clicked_obj;
 }

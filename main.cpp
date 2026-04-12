@@ -89,6 +89,22 @@ int expose_hook(void* param)
     return 0;
 }
 
+int mouse_click(int button, int x, int y, void* param)
+{
+    Scene* scene = (Scene*)param;
+    Objects* obj = scene->getClickedObject(x, y);
+    
+    if (obj != nullptr)
+    {
+        std::cout << "Clicked object address: " << obj << std::endl;
+    }
+    else
+    {
+        std::cout << "No object clicked at (" << x << ", " << y << ")" << std::endl;
+    }
+    return 0;
+}
+
 int main()
 {
     void* mlx = mlx_init();
@@ -122,6 +138,7 @@ int main()
     
     // Hook keys
     mlx_hook(scene.win, 2, 1L<<0, (int (*)())key_press, &scene);
+    mlx_hook(scene.win, 4, 1L<<2, (int (*)())mouse_click, &scene);
     mlx_hook(scene.win, 17, 0, (int (*)())close_window, &scene);
     // Expose event (when the window must be repainted). Mask must not be 0.
     mlx_hook(scene.win, 12, 1L<<15, (int (*)())expose_hook, &scene);
