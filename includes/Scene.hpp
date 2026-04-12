@@ -26,6 +26,7 @@ private:
     // void* data;
     
     // std::vector<Objects> objects;
+    bool isShadowed(const Points3& hit, const Vec3& light_dir, const Objects* exclude_obj);
     
 public:
     void*   mlx;
@@ -79,6 +80,42 @@ Scene::~Scene()
 {
 }
 
+bool Scene::isShadowed(const Points3& hit, const Vec3& light_dir, const Objects* exclude_obj)
+{
+    // Create a ray from hit point toward the light
+    // Add a small epsilon offset to avoid self-intersection
+    const double epsilon = 1e-4;
+    Points3 shadow_ray_origin = Points3(
+        hit.getX() + light_dir.getX() ,
+        hit.getY() + light_dir.getY() ,
+        hit.getZ() + light_dir.getZ() 
+    );
+    
+    Ray shadow_ray(shadow_ray_origin, light_dir);
+    
+    // Calculate distance to light source
+    Vec3 to_light = light_pos - hit;
+    double distance_to_light = sqrt(Vec3::dot(to_light, to_light));
+    
+    // Check intersection with all objects except the one we just hit
+    for (const std::unique_ptr<Objects>& obj : objects)
+    {
+        // Skip the object that was hit (to avoid self-shadowing)
+        if (obj.get() == exclude_obj)
+            continue;
+            
+        double t;
+        if (obj->intersect(shadow_ray, t))
+        {
+            // Only consider it a shadow if the intersection is between hit point and light
+            // and closer than the light source
+            if (t > epsilon && t < distance_to_light)
+                return true;
+        }
+    }
+    return false;
+
+}
 
 void Scene::setLightPos(const Points3& pos) {
     this->light_pos = Points3(pos.getX(), pos.getY(), pos.getZ());
@@ -91,6 +128,13 @@ int Scene::compute_lighting(const Vec3& hit, std::unique_ptr<Objects>& obj)
 
     // Vec3 light_dir = normalize(Vec3(-1, 1, -1));// Vec3(-1, 1, -1) is the direction from the hit point to the light source
     Vec3 light_dir = normalize(light_pos - hit);
+
+    if (isShadowed(hit, light_dir, obj.get()))
+    {
+        // Use ambient light instead of complete black
+        int ambient_c = (int)(0.2 * 255.0); // 20% ambient brightness
+        return (ambient_c << 16) | (ambient_c << 8) | ambient_c;
+    }
     double brightness = std::max(0.0, Vec3::dot(normal, light_dir));
     if (brightness < 0)
         brightness = 0;
