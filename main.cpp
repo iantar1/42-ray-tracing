@@ -2,6 +2,7 @@
 # include "includes/Camera.hpp"
 # include "includes/Ray.hpp"
 #include "includes/Cylinder.hpp"
+# include "includes/Cone.hpp"
 extern "C" {
     #include "minilibx-linux/mlx.h"
 }
@@ -12,6 +13,7 @@ extern "C" {
 #include <iostream>
 #include "includes/Scene.hpp"
 # include "includes/Plane.hpp"
+#include "includes/Light.hpp"
 
 # define W 119
 # define A 97
@@ -22,6 +24,14 @@ extern "C" {
 # define DOWN 65364
 # define LEFT 65361
 # define RIGHT 65363
+# define Q 113
+# define E 101
+# define Z 122
+# define X 120
+# define R 114
+# define T 116
+# define Y 121
+# define SPACE 32
 
 struct AppState {
     Camera camera;
@@ -63,6 +73,28 @@ int key_press(int keycode, void* param)
         scene->moveLightRight(-0.1);
     else if (keycode == RIGHT)
         scene->moveLightRight(0.1);
+    else if (keycode == SPACE)
+    {
+        // Switch to next light
+        scene->selectNextLight();
+        std::cout << "Light " << (scene->getSelectedLightIndex() + 1) << " selected (use arrows to move)" << std::endl;
+    }
+    // Translate selected object
+    else if (keycode == Q)
+        scene->translateSelectedObject(Vec3(-0.1, 0, 0));  // Move left
+    else if (keycode == E)
+        scene->translateSelectedObject(Vec3(0.1, 0, 0));   // Move right
+    else if (keycode == Z)
+        scene->translateSelectedObject(Vec3(0, 0.1, 0));   // Move up
+    else if (keycode == X)
+        scene->translateSelectedObject(Vec3(0, -0.1, 0));  // Move down
+    // Rotate selected object
+    else if (keycode == R)
+        scene->rotateSelectedObjectX(0.1);  // Rotate around X-axis
+    else if (keycode == T)
+        scene->rotateSelectedObjectY(0.1);  // Rotate around Y-axis
+    else if (keycode == Y)
+        scene->rotateSelectedObjectZ(0.1);  // Rotate around Z-axis
     else if (keycode == ESC)
     {
         close_window(param);
@@ -97,6 +129,10 @@ int mouse_click(int button, int x, int y, void* param)
     if (obj != nullptr)
     {
         std::cout << "Clicked object address: " << obj << std::endl;
+        scene->selectObject(obj);
+        std::cout << "Object selected." << std::endl;
+        std::cout << "  Translation: Q/E (left/right), Z/X (up/down)" << std::endl;
+        std::cout << "  Rotation: R (X-axis), T (Y-axis), Y (Z-axis)" << std::endl;
     }
     else
     {
@@ -127,12 +163,19 @@ int main()
     
     // First render
     // render_scene(state.data, state.size_line, state.bpp, state.camera);
-    scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
-    scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5))));
-    scene.addObject(std::make_unique<Cylinder>(Cylinder(Points3(0, 0, -2), Vec3(0.5, 0.5, 0), 0.5, 1.5)));
-    scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 0, 1), Points3(2, 1, -6))));
-    scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 1, 0), Points3(3, -1, -6))));
-    scene.addObject(std::make_unique<Plane>(Plane(Vec3(1, 0, 0), Points3(-2, 0, -1))));
+    // scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(0, 0, -3))));
+    scene.addObject(std::make_unique<Sphere>(Sphere(1.0, Points3(2, 1, -5), Vec3(255, 0, 0), 64.0, 0.0, 0.6)));  // Reflective red sphere
+    // scene.addObject(std::make_unique<Cylinder>(Cylinder(Points3(0, 0, -2), Vec3(0.5, 0.5, 0), 0.5, 1.5)));
+    scene.addObject(std::make_unique<Cone>(Cone(Points3(0, -1, -2), Vec3(0, 1, 0), 0.4, 2.0, Vec3(0, 255, 0), 16.0, 0.5)));  // Less shiny green cone
+    scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 0, 1), Points3(2, 1, -6), Vec3(0, 0, 255), 8.0, 0.0, 0.4)));  // Blue reflective plane
+    scene.addObject(std::make_unique<Plane>(Plane(Vec3(0, 1, 0), Points3(3, -1, -6), Vec3(255, 255, 0), 32.0, 0.0, 0.7)));  // Reflective yellow plane
+    scene.addObject(std::make_unique<Plane>(Plane(Vec3(1, 0, 0), Points3(-2, 0, -1), Vec3(255, 0, 255), 4.0)));  // Non-reflective magenta plane
+
+    // Add multiple lights
+    scene.addLight(Light(1.0, 0, Vec3(-1, 1, -1)));
+    scene.addLight(Light(0.8, 0, Vec3(2, 2, -2)));
+    scene.addLight(Light(0.6, 0, Vec3(-2, -1, -3)));
+
     scene.render();
     mlx_put_image_to_window(scene.mlx, scene.win, scene.img, 0, 0);
     

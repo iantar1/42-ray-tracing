@@ -3,7 +3,8 @@ MLX_DIR = minilibx-linux
 MLX_LIB = $(MLX_DIR)/libmlx.a
 MLX_FLAGS = -L$(MLX_DIR) -lmlx -lXext -lX11 -lm -lz
 CXX = g++
-CXXFLAGS =  -fsanitize=address
+CXXFLAGS = -O3 -march=native
+DEBUG_FLAGS = -g3 -O0 -fsanitize=address
 SRC = main.cpp
 OBJ = $(SRC:.cpp=.o)
 DEP = $(OBJ:.o=.d)
@@ -17,6 +18,10 @@ $(NAME): $(OBJ) */**.hpp
 	$(CXX)  -MMD $(CXXFLAGS) -o $(NAME) $(OBJ) $(MLX_FLAGS)
 # -MMD: This tells the compiler to generate .d files that contain dependency rules
 # 		(i.e., which .hpp files each .cpp depends on).
+
+debug: CXXFLAGS = $(DEBUG_FLAGS)
+debug: re
+
 clean:
 	rm -f $(OBJ)
 	$(MAKE) -C $(MLX_DIR) clean

@@ -9,6 +9,10 @@ private:
     Points3 center;
 public:
     Sphere(double _radius, Points3 _center);
+    Sphere(double _radius, Points3 _center, const Vec3& _color);
+    Sphere(double _radius, Points3 _center, const Vec3& _color, double _shininess);
+    Sphere(double _radius, Points3 _center, const Vec3& _color, double _shininess, double _transparency);
+    Sphere(double _radius, Points3 _center, const Vec3& _color, double _shininess, double _transparency, double _reflectivity);
     ~Sphere();
     double getRadius() const;
     Points3 getCenter() const;
@@ -16,9 +20,29 @@ public:
     void setCenter(Points3 _center);
     bool intersect(const Ray& ray, double& t_hit);
     Vec3 get_normal(const Points3& hit);
+    void translate(const Vec3& offset);
+    void rotateX(double angle);
+    void rotateY(double angle);
+    void rotateZ(double angle);
 };
 
-Sphere::Sphere(double _radius, Points3 _center) : radius(_radius), center(_center)
+Sphere::Sphere(double _radius, Points3 _center) : Objects(), radius(_radius), center(_center)
+{
+}
+
+Sphere::Sphere(double _radius, Points3 _center, const Vec3& _color) : Objects(_color), radius(_radius), center(_center)
+{
+}
+
+Sphere::Sphere(double _radius, Points3 _center, const Vec3& _color, double _shininess) : Objects(_color, _shininess), radius(_radius), center(_center)
+{
+}
+
+Sphere::Sphere(double _radius, Points3 _center, const Vec3& _color, double _shininess, double _transparency) : Objects(_color, _shininess, _transparency), radius(_radius), center(_center)
+{
+}
+
+Sphere::Sphere(double _radius, Points3 _center, const Vec3& _color, double _shininess, double _transparency, double _reflectivity) : Objects(_color, _shininess, _transparency, _reflectivity), radius(_radius), center(_center)
 {
 }
 
@@ -96,3 +120,16 @@ Vec3 Sphere::get_normal(const Points3& hit)
     );
     return normalize(normal);
 }
+
+void Sphere::translate(const Vec3& offset)
+{
+    center = Points3(
+        center.getX() + offset.getX(),
+        center.getY() + offset.getY(),
+        center.getZ() + offset.getZ()
+    );
+}
+
+void Sphere::rotateX(double angle) { }
+void Sphere::rotateY(double angle) { }
+void Sphere::rotateZ(double angle) { }

@@ -27,7 +27,7 @@ Notes from the subject:
 ### Core ray tracer
 
 - [x] Implement ray tracing to generate an image of a 3D scene.
-- [ ] Scene contains **simple geometric objects** + **light sources**.
+- [x] Scene contains **simple geometric objects** + **light sources**.
 - [x] Camera/eye position and direction are easy to change.
 
 ### Required primitives (at least these 4)
@@ -35,14 +35,14 @@ Notes from the subject:
 Implement intersection + surface normals + shading support for:
 
 - [x] Sphere
-- [ ] Plane
-- [ ] Cylinder
-- [ ] Cone
+- [x] Plane
+- [x] Cylinder
+- [x] Cone
 
 ### Transformations
 
-- [ ] Objects support **translation** before rendering.
-- [ ] Objects support **rotation** before rendering.
+- [x] Objects support **translation** before rendering.
+- [x] Objects support **rotation** before rendering.
 
 ### Display / performance behavior
 
@@ -52,7 +52,7 @@ Implement intersection + surface normals + shading support for:
 ### Light management (mandatory expectations)
 
 - [x] Different light brightness is supported.
-- [ ] Shadows are implemented.
+- [x] Shadows are implemented.
 - [ ] Multiple spot lights supported.
 - [ ] “Shine effect” implemented (specular highlight / glossy look).
 
@@ -70,8 +70,8 @@ The subject lists options as examples (not an exhaustive list). Pick a set you c
 
 Lighting options:
 
-- [ ] Ambient light
-- [ ] Direct light
+- [x] Ambient light
+- [x] Direct light
 - [ ] Parallel light
 
 Geometry options:

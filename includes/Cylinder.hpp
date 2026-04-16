@@ -1,3 +1,5 @@
+#pragma once
+
 # include "Objects.hpp"
 # include "Vec3.hpp"
 # include "utils.hpp"
@@ -12,16 +14,42 @@ private:
     double  half_height;  // For clamping intersections to finite cylinder
 public:
     Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height = 10.0);
+    Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color);
+    Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color, double _shininess);
+    Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color, double _shininess, double _transparency);
+    Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color, double _shininess, double _transparency, double _reflectivity);
     ~Cylinder();
 
     Vec3    get_normal(const Points3& hit);
-
-
     bool    intersect(const Ray& ray, double& t_hit);
+    void translate(const Vec3& offset);
+    void rotateX(double angle);
+    void rotateY(double angle);
+    void rotateZ(double angle);
 };
 
 Cylinder::Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height): 
-    center(_center), axis(normalize(_axis)), radius(_radius), half_height(_half_height)
+    Objects(), center(_center), axis(normalize(_axis)), radius(_radius), half_height(_half_height)
+{
+}
+
+Cylinder::Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color): 
+    Objects(_color), center(_center), axis(normalize(_axis)), radius(_radius), half_height(_half_height)
+{
+}
+
+Cylinder::Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color, double _shininess): 
+    Objects(_color, _shininess), center(_center), axis(normalize(_axis)), radius(_radius), half_height(_half_height)
+{
+}
+
+Cylinder::Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color, double _shininess, double _transparency): 
+    Objects(_color, _shininess, _transparency), center(_center), axis(normalize(_axis)), radius(_radius), half_height(_half_height)
+{
+}
+
+Cylinder::Cylinder(Points3 _center, Vec3 _axis, double _radius, double _half_height, const Vec3& _color, double _shininess, double _transparency, double _reflectivity): 
+    Objects(_color, _shininess, _transparency, _reflectivity), center(_center), axis(normalize(_axis)), radius(_radius), half_height(_half_height)
 {
 }
 
@@ -87,4 +115,43 @@ Vec3 Cylinder::get_normal(const Points3& hit)
     Vec3 radial = oc - axis * Vec3::dot(oc, axis);
     
     return normalize(radial);
+}
+
+void Cylinder::translate(const Vec3& offset)
+{
+    center = Points3(
+        center.getX() + offset.getX(),
+        center.getY() + offset.getY(),
+        center.getZ() + offset.getZ()
+    );
+}
+
+void Cylinder::rotateX(double angle)
+{
+    // Rotate axis around X-axis
+    double y = axis.getY();
+    double z = axis.getZ();
+    double cos_a = cos(angle);
+    double sin_a = sin(angle);
+    axis = normalize(Vec3(axis.getX(), y * cos_a - z * sin_a, y * sin_a + z * cos_a));
+}
+
+void Cylinder::rotateY(double angle)
+{
+    // Rotate axis around Y-axis
+    double x = axis.getX();
+    double z = axis.getZ();
+    double cos_a = cos(angle);
+    double sin_a = sin(angle);
+    axis = normalize(Vec3(x * cos_a + z * sin_a, axis.getY(), -x * sin_a + z * cos_a));
+}
+
+void Cylinder::rotateZ(double angle)
+{
+    // Rotate axis around Z-axis
+    double x = axis.getX();
+    double y = axis.getY();
+    double cos_a = cos(angle);
+    double sin_a = sin(angle);
+    axis = normalize(Vec3(x * cos_a - y * sin_a, x * sin_a + y * cos_a, axis.getZ()));
 }
