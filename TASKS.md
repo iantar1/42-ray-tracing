@@ -84,8 +84,8 @@ Material / appearance options:
 
 - [ ] Textures
 - [ ] Bump mapping / colour disruption
-- [ ] Reflection
-- [ ] Transparency
+- [x] Reflection
+- [x] Transparency
 - [ ] Shadow modification according to transparency
 - [ ] Negative elements
 - [ ] Limit disruption / transparency / reflection depending on texture
