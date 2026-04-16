@@ -4,3 +4,1191 @@ This project is nothing but a climax of amazing computer-generated images
 ## Progress / checklist
 
 See `TASKS.md` for a full list of what’s done and what’s left.
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RT — Ray Tracer Documentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #2a2a3a;
+    --accent: #7c6af7;
+    --accent2: #f76a8a;
+    --accent3: #6af7c8;
+    --text: #e8e8f0;
+    --muted: #888899;
+    --code-bg: #0d0d14;
+    --ray: #f7c96a;
+    --normal: #6af7c8;
+    --light: #fff5a0;
+    --reflect: #f76adc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 60px 80px 50px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-canvas {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 80% 40%, rgba(124,106,247,.15) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 20% 70%, rgba(106,247,200,.07) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  /* animated rays */
+  .ray-anim {
+    position: absolute; top: 0; right: 0;
+    width: 600px; height: 340px;
+    opacity: 0.18;
+  }
+
+  .hero h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero .subtitle {
+    margin-top: 14px;
+    font-size: 1.05rem;
+    color: var(--muted);
+    position: relative; z-index: 1;
+    max-width: 600px;
+  }
+
+  .badges {
+    margin-top: 22px;
+    display: flex; gap: 10px; flex-wrap: wrap;
+    position: relative; z-index: 1;
+  }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border-radius: 3px;
+    border: 1px solid;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-purple { border-color: var(--accent); color: var(--accent); background: rgba(124,106,247,.08); }
+  .badge-green  { border-color: var(--accent3); color: var(--accent3); background: rgba(106,247,200,.08); }
+  .badge-pink   { border-color: var(--accent2); color: var(--accent2); background: rgba(247,106,138,.08); }
+  .badge-yellow { border-color: var(--ray);     color: var(--ray);     background: rgba(247,201,106,.08); }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 80px;
+    display: flex; gap: 0; overflow-x: auto;
+  }
+
+  nav a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 16px 18px;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+    white-space: nowrap;
+  }
+
+  nav a:hover { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* ─── LAYOUT ─── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 80px; }
+
+  section {
+    padding: 70px 0 50px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 36px 0 12px;
+    color: var(--text);
+  }
+
+  h3.sub {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent3);
+    margin: 24px 0 8px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  p { margin-bottom: 14px; color: #ccccd8; }
+
+  /* ─── CODE ─── */
+  pre, code {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 20px 24px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 16px 0;
+    line-height: 1.6;
+  }
+
+  code { color: var(--accent3); }
+  pre code { color: #d0d0e0; }
+
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .cm  { color: #546e7a; font-style: italic; }
+  .num { color: var(--ray); }
+  .str { color: var(--accent3); }
+  .tp  { color: #f78c6c; }
+
+  /* ─── MATH BLOCKS ─── */
+  .math-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--ray);
+    padding: 18px 24px;
+    border-radius: 6px;
+    margin: 16px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.9;
+    color: #e0e0f0;
+  }
+
+  .math-block .eq { color: var(--ray); display: block; margin: 4px 0; }
+  .math-block .cmt { color: var(--muted); font-size: 0.78rem; }
+
+  /* ─── SVG DIAGRAMS ─── */
+  .diagram-wrap {
+    margin: 30px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .diagram-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .diagram-wrap svg { display: block; width: 100%; }
+
+  /* ─── GRID ─── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 24px 0;
+  }
+
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px 24px;
+  }
+
+  .card h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .card p { font-size: 0.9rem; margin: 0; }
+
+  /* ─── TABLE ─── */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+  th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  td { padding: 10px 16px; border-bottom: 1px solid rgba(42,42,58,.5); }
+  tr:hover td { background: var(--surface); }
+  td:first-child { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--accent3); }
+
+  /* ─── KEY TABLE ─── */
+  .key-table { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+  .key-row { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; }
+  .key {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    color: var(--ray);
+  }
+
+  /* ─── PIPELINE STEPS ─── */
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 28px 0;
+    flex-wrap: wrap;
+  }
+
+  .pipe-step {
+    flex: 1;
+    min-width: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 16px;
+    position: relative;
+    text-align: center;
+  }
+
+  .pipe-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 1.2rem;
+    z-index: 2;
+    background: var(--bg);
+    padding: 0 2px;
+  }
+
+  .pipe-step:first-child { border-radius: 8px 0 0 8px; }
+  .pipe-step:last-child  { border-radius: 0 8px 8px 0; }
+
+  .pipe-step .icon { font-size: 1.6rem; margin-bottom: 6px; }
+  .pipe-step .title { font-size: 0.82rem; font-weight: 700; color: var(--accent); }
+  .pipe-step .desc  { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+
+  /* ─── HIGHLIGHT BOX ─── */
+  .highlight {
+    background: rgba(124,106,247,.07);
+    border: 1px solid rgba(124,106,247,.25);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 20px 0;
+    font-size: 0.93rem;
+  }
+
+  .highlight strong { color: var(--accent); }
+
+  /* ─── TOC ─── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 30px 0;
+    display: inline-block;
+    min-width: 300px;
+  }
+
+  .toc-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 5px 0; }
+  .toc a { color: var(--accent3); text-decoration: none; font-size: 0.9rem; }
+  .toc a:hover { color: var(--text); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ HERO -->
+<div class="hero">
+  <div class="hero-canvas"></div>
+  <svg class="ray-anim" viewBox="0 0 600 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- camera point -->
+    <circle cx="30" cy="170" r="6" fill="#7c6af7" opacity="0.8"/>
+    <!-- rays fanning out -->
+    <line x1="30" y1="170" x2="580" y2="40"  stroke="#f7c96a" stroke-width="1" opacity="0.7"/>
+    <line x1="30" y1="170" x2="580" y2="100" stroke="#f7c96a" stroke-width="1" opacity="0.6"/>
+    <line x1="30" y1="170" x2="580" y2="170" stroke="#f7c96a" stroke-width="1.5" opacity="0.9"/>
+    <line x1="30" y1="170" x2="580" y2="240" stroke="#f7c96a" stroke-width="1" opacity="0.6"/>
+    <line x1="30" y1="170" x2="580" y2="300" stroke="#f7c96a" stroke-width="1" opacity="0.5"/>
+    <!-- image plane -->
+    <line x1="200" y1="20" x2="200" y2="320" stroke="#7c6af7" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.5"/>
+    <text x="204" y="16" fill="#7c6af7" font-size="10" font-family="monospace" opacity="0.6">image plane</text>
+    <!-- sphere -->
+    <circle cx="430" cy="170" r="55" stroke="#6af7c8" stroke-width="1.5" fill="rgba(106,247,200,.04)" opacity="0.7"/>
+    <!-- normal at hit -->
+    <line x1="375" y1="170" x2="310" y2="170" stroke="#6af7c8" stroke-width="1.5" marker-end="url(#arr-n)" opacity="0.8"/>
+    <!-- reflection -->
+    <line x1="375" y1="170" x2="300" y2="80"  stroke="#f76adc" stroke-width="1.2" stroke-dasharray="6,3" opacity="0.7"/>
+    <defs>
+      <marker id="arr-n" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#6af7c8"/>
+      </marker>
+    </defs>
+    <!-- labels -->
+    <text x="32"  y="160" fill="#f7c96a"  font-size="9" font-family="monospace">Camera</text>
+    <text x="420" y="140" fill="#6af7c8"  font-size="9" font-family="monospace">Object</text>
+    <text x="308" y="168" fill="#6af7c8"  font-size="9" font-family="monospace">N</text>
+    <text x="295" y="76"  fill="#f76adc"  font-size="9" font-family="monospace">R</text>
+  </svg>
+  <h1>Mini<span>RT</span></h1>
+  <p class="subtitle">A physically-based ray tracer built in C++ with the MiniLibX display library. Renders spheres, cylinders, cones, and planes with Phong lighting, shadows, and recursive reflections.</p>
+  <div class="badges">
+    <span class="badge badge-purple">C++17</span>
+    <span class="badge badge-green">Ray Tracing</span>
+    <span class="badge badge-pink">Phong Lighting</span>
+    <span class="badge badge-yellow">Reflections</span>
+    <span class="badge badge-purple">MiniLibX</span>
+    <span class="badge badge-green">800 × 600</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ NAV -->
+<nav>
+  <a href="#overview">Overview</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#math">Math & Physics</a>
+  <a href="#objects">Objects</a>
+  <a href="#lighting">Lighting</a>
+  <a href="#reflections">Reflections</a>
+  <a href="#camera">Camera</a>
+  <a href="#controls">Controls</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════ OVERVIEW -->
+<section id="overview">
+  <div class="container">
+    <div class="section-label">01 — Overview</div>
+    <h2>What is RT?</h2>
+    <p>
+      RT is a CPU ray tracer written in C++. It simulates how light travels and bounces in a 3D scene to produce photorealistic images. For every pixel on screen, a ray is shot from the camera into the scene; the renderer finds what it hits, computes diffuse and specular lighting, casts shadow rays to each light, and — if the surface is reflective — recursively follows the bounced ray.
+    </p>
+
+    <div class="toc">
+      <div class="toc-title">Table of Contents</div>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#architecture">Architecture & Class Diagram</a></li>
+        <li><a href="#math">Core Math & Physics</a></li>
+        <li><a href="#objects">Geometric Objects & Intersection</a></li>
+        <li><a href="#lighting">Phong Lighting Model</a></li>
+        <li><a href="#reflections">Shadows & Reflections</a></li>
+        <li><a href="#camera">Camera & Ray Generation</a></li>
+        <li><a href="#controls">Controls & Interaction</a></li>
+      </ol>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipe-step"><div class="icon">📷</div><div class="title">Camera</div><div class="desc">Generate ray per pixel</div></div>
+      <div class="pipe-step"><div class="icon">📐</div><div class="title">Intersect</div><div class="desc">Find closest object</div></div>
+      <div class="pipe-step"><div class="icon">💡</div><div class="title">Shade</div><div class="desc">Diffuse + specular</div></div>
+      <div class="pipe-step"><div class="icon">🌑</div><div class="title">Shadow</div><div class="desc">Shadow rays to lights</div></div>
+      <div class="pipe-step"><div class="icon">🔁</div><div class="title">Reflect</div><div class="desc">Recursive bounces</div></div>
+      <div class="pipe-step"><div class="icon">🎨</div><div class="title">Output</div><div class="desc">Write pixel to buffer</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ ARCHITECTURE -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-label">02 — Architecture</div>
+    <h2>Class Architecture</h2>
+    <p>The project is organized around a small, clean class hierarchy. <code>Objects</code> is the abstract base class. All geometry inherits from it and must implement <code>intersect()</code>, <code>get_normal()</code>, and the transform methods.</p>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">UML Class Diagram</div>
+      <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14">
+        <defs>
+          <marker id="inherit" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto">
+            <polygon points="0,0 0,10 10,5" fill="none" stroke="#7c6af7" stroke-width="1.5"/>
+          </marker>
+          <marker id="compose" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+            <polygon points="0,5 5,0 10,5 5,10" fill="#6af7c8"/>
+          </marker>
+          <marker id="assoc" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8" fill="none" stroke="#888899" stroke-width="1.2"/>
+          </marker>
+        </defs>
+
+        <!-- Objects (abstract) -->
+        <rect x="320" y="20" width="260" height="130" rx="6" fill="#16161f" stroke="#7c6af7" stroke-width="1.5"/>
+        <rect x="320" y="20" width="260" height="28" rx="6" fill="#7c6af7" opacity="0.2"/>
+        <text x="450" y="39" fill="#7c6af7" font-size="12" font-family="monospace" text-anchor="middle" font-weight="bold">«abstract» Objects</text>
+        <text x="334" y="66" fill="#888" font-size="10" font-family="monospace">- color: Vec3</text>
+        <text x="334" y="80" fill="#888" font-size="10" font-family="monospace">- shininess: double</text>
+        <text x="334" y="94" fill="#888" font-size="10" font-family="monospace">- transparency: double</text>
+        <text x="334" y="108" fill="#888" font-size="10" font-family="monospace">- reflectivity: double</text>
+        <text x="334" y="125" fill="#6af7c8" font-size="10" font-family="monospace">+ intersect() : bool [pure]</text>
+        <text x="334" y="140" fill="#6af7c8" font-size="10" font-family="monospace">+ get_normal() : Vec3 [pure]</text>
+
+        <!-- Sphere -->
+        <rect x="30" y="240" width="170" height="100" rx="6" fill="#16161f" stroke="#f76a8a" stroke-width="1.2"/>
+        <rect x="30" y="240" width="170" height="24" rx="6" fill="#f76a8a" opacity="0.15"/>
+        <text x="115" y="257" fill="#f76a8a" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Sphere</text>
+        <text x="42" y="276" fill="#888" font-size="10" font-family="monospace">- radius: double</text>
+        <text x="42" y="290" fill="#888" font-size="10" font-family="monospace">- center: Points3</text>
+        <text x="42" y="310" fill="#6af7c8" font-size="10" font-family="monospace">+ intersect()</text>
+        <text x="42" y="324" fill="#6af7c8" font-size="10" font-family="monospace">+ get_normal()</text>
+
+        <!-- Cylinder -->
+        <rect x="222" y="240" width="170" height="120" rx="6" fill="#16161f" stroke="#f78c6c" stroke-width="1.2"/>
+        <rect x="222" y="240" width="170" height="24" rx="6" fill="#f78c6c" opacity="0.15"/>
+        <text x="307" y="257" fill="#f78c6c" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Cylinder</text>
+        <text x="234" y="276" fill="#888" font-size="10" font-family="monospace">- center: Points3</text>
+        <text x="234" y="290" fill="#888" font-size="10" font-family="monospace">- axis: Vec3</text>
+        <text x="234" y="304" fill="#888" font-size="10" font-family="monospace">- radius: double</text>
+        <text x="234" y="318" fill="#888" font-size="10" font-family="monospace">- half_height: double</text>
+        <text x="234" y="338" fill="#6af7c8" font-size="10" font-family="monospace">+ intersect()</text>
+
+        <!-- Cone -->
+        <rect x="414" y="240" width="170" height="120" rx="6" fill="#16161f" stroke="#f7c96a" stroke-width="1.2"/>
+        <rect x="414" y="240" width="170" height="24" rx="6" fill="#f7c96a" opacity="0.15"/>
+        <text x="499" y="257" fill="#f7c96a" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Cone</text>
+        <text x="426" y="276" fill="#888" font-size="10" font-family="monospace">- apex: Points3</text>
+        <text x="426" y="290" fill="#888" font-size="10" font-family="monospace">- axis: Vec3</text>
+        <text x="426" y="304" fill="#888" font-size="10" font-family="monospace">- half_angle: double</text>
+        <text x="426" y="318" fill="#888" font-size="10" font-family="monospace">- half_height: double</text>
+        <text x="426" y="338" fill="#6af7c8" font-size="10" font-family="monospace">+ intersect()</text>
+
+        <!-- Plane -->
+        <rect x="606" y="240" width="170" height="100" rx="6" fill="#16161f" stroke="#82aaff" stroke-width="1.2"/>
+        <rect x="606" y="240" width="170" height="24" rx="6" fill="#82aaff" opacity="0.15"/>
+        <text x="691" y="257" fill="#82aaff" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Plane</text>
+        <text x="618" y="276" fill="#888" font-size="10" font-family="monospace">- normal: Vec3</text>
+        <text x="618" y="290" fill="#888" font-size="10" font-family="monospace">- point: Points3</text>
+        <text x="618" y="310" fill="#6af7c8" font-size="10" font-family="monospace">+ intersect()</text>
+        <text x="618" y="324" fill="#6af7c8" font-size="10" font-family="monospace">+ get_normal()</text>
+
+        <!-- Inheritance lines -->
+        <line x1="115" y1="240" x2="370" y2="150" stroke="#7c6af7" stroke-width="1.2" marker-end="url(#inherit)"/>
+        <line x1="307" y1="240" x2="420" y2="150" stroke="#7c6af7" stroke-width="1.2" marker-end="url(#inherit)"/>
+        <line x1="499" y1="240" x2="480" y2="150" stroke="#7c6af7" stroke-width="1.2" marker-end="url(#inherit)"/>
+        <line x1="691" y1="240" x2="530" y2="150" stroke="#7c6af7" stroke-width="1.2" marker-end="url(#inherit)"/>
+
+        <!-- Scene box -->
+        <rect x="30"  y="420" width="180" height="80" rx="6" fill="#16161f" stroke="#6af7c8" stroke-width="1.2"/>
+        <rect x="30"  y="420" width="180" height="22" rx="6" fill="#6af7c8" opacity="0.12"/>
+        <text x="120" y="436" fill="#6af7c8" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Scene</text>
+        <text x="42"  y="454" fill="#888" font-size="10" font-family="monospace">- objects: vector</text>
+        <text x="42"  y="468" fill="#888" font-size="10" font-family="monospace">- lights: vector</text>
+        <text x="42"  y="482" fill="#888" font-size="10" font-family="monospace">- camera: Camera</text>
+
+        <!-- Camera box -->
+        <rect x="240" y="420" width="180" height="80" rx="6" fill="#16161f" stroke="#c792ea" stroke-width="1.2"/>
+        <rect x="240" y="420" width="180" height="22" rx="6" fill="#c792ea" opacity="0.12"/>
+        <text x="330" y="436" fill="#c792ea" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Camera</text>
+        <text x="252" y="454" fill="#888" font-size="10" font-family="monospace">- position: Points3</text>
+        <text x="252" y="468" fill="#888" font-size="10" font-family="monospace">- direction: Vec3</text>
+        <text x="252" y="482" fill="#888" font-size="10" font-family="monospace">+ getRay(x,y): Ray</text>
+
+        <!-- Light box -->
+        <rect x="450" y="420" width="180" height="80" rx="6" fill="#16161f" stroke="#f7c96a" stroke-width="1.2"/>
+        <rect x="450" y="420" width="180" height="22" rx="6" fill="#f7c96a" opacity="0.12"/>
+        <text x="540" y="436" fill="#f7c96a" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Light</text>
+        <text x="462" y="454" fill="#888" font-size="10" font-family="monospace">- position: Vec3</text>
+        <text x="462" y="468" fill="#888" font-size="10" font-family="monospace">- intensity: double</text>
+
+        <!-- Vec3 / Ray box -->
+        <rect x="660" y="420" width="180" height="80" rx="6" fill="#16161f" stroke="#f76a8a" stroke-width="1.2"/>
+        <rect x="660" y="420" width="180" height="22" rx="6" fill="#f76a8a" opacity="0.12"/>
+        <text x="750" y="436" fill="#f76a8a" font-size="11" font-family="monospace" text-anchor="middle" font-weight="bold">Vec3 / Ray</text>
+        <text x="672" y="454" fill="#888" font-size="10" font-family="monospace">Vec3: x, y, z + ops</text>
+        <text x="672" y="468" fill="#888" font-size="10" font-family="monospace">Ray: origin + dir</text>
+        <text x="672" y="482" fill="#888" font-size="10" font-family="monospace">Points3 = Vec3</text>
+
+        <!-- Scene owns Objects -->
+        <line x1="120" y1="420" x2="200" y2="360" stroke="#6af7c8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#compose)"/>
+
+        <!-- Legend -->
+        <line x1="30" y1="395" x2="60" y2="395" stroke="#7c6af7" stroke-width="1.2" marker-end="url(#inherit)"/>
+        <text x="65" y="399" fill="#888" font-size="10" font-family="monospace">inherits</text>
+        <line x1="160" y1="395" x2="190" y2="395" stroke="#6af7c8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#compose)"/>
+        <text x="195" y="399" fill="#888" font-size="10" font-family="monospace">owns / uses</text>
+      </svg>
+    </div>
+
+    <h3>File Structure</h3>
+    <pre><code>RT/
+├── includes/
+│   ├── Vec3.hpp        <span class="cm">// 3D vector + Points3 alias</span>
+│   ├── Ray.hpp         <span class="cm">// Ray: origin + direction</span>
+│   ├── Camera.hpp      <span class="cm">// Perspective camera, ray generation</span>
+│   ├── Objects.hpp     <span class="cm">// Abstract base for all geometry</span>
+│   ├── Sphere.hpp
+│   ├── Cylinder.hpp
+│   ├── Cone.hpp
+│   ├── Plane.hpp
+│   ├── Light.hpp
+│   ├── Scene.hpp       <span class="cm">// Render loop, Phong, shadows, reflections</span>
+│   └── utils.hpp       <span class="cm">// normalize, rotateAroundAxis, …</span>
+├── srcs/
+│   └── Vec3.cpp
+├── minilibx-linux/     <span class="cm">// MiniLibX display lib</span>
+└── main.cpp</code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ MATH -->
+<section id="math">
+  <div class="container">
+    <div class="section-label">03 — Core Math &amp; Physics</div>
+    <h2>Vectors, Rays, and Geometry</h2>
+
+    <h3>3D Vectors — <code>Vec3</code></h3>
+    <p>
+      The <code>Vec3</code> class is the numeric backbone of the renderer. Every position, direction, and color is a <code>Vec3</code>. <code>Points3</code> is a type alias for it — the distinction is purely semantic (a point vs. a direction).
+    </p>
+
+    <div class="math-block">
+      <span class="cmt">// Dot product — measures how aligned two vectors are</span>
+      <span class="eq">v₁ · v₂  =  x₁x₂ + y₁y₂ + z₁z₂</span>
+      <span class="cmt">// Returns a scalar. Positive ⟹ same direction, 0 ⟹ perpendicular, negative ⟹ opposite.</span>
+      <br>
+      <span class="cmt">// Cross product — vector perpendicular to both inputs</span>
+      <span class="eq">v₁ × v₂  =  ( y₁z₂−z₁y₂,  z₁x₂−x₁z₂,  x₁y₂−y₁x₂ )</span>
+      <br>
+      <span class="cmt">// Normalization — make length = 1 (unit vector)</span>
+      <span class="eq">v̂  =  v / |v|    where  |v| = √(v · v)</span>
+    </div>
+
+    <h3>The Ray — <code>Ray.hpp</code></h3>
+    <p>A ray is a parametric half-line starting at an origin <strong>O</strong> heading in direction <strong>D</strong>:</p>
+
+    <div class="math-block">
+      <span class="eq">P(t) = O + t · D        (t ≥ 0)</span>
+      <span class="cmt">// O = ray origin (camera position or reflection point)</span>
+      <span class="cmt">// D = ray direction (unit or non-unit; checked per-intersector)</span>
+      <span class="cmt">// t = distance parameter — larger t ⟹ farther along the ray</span>
+      <span class="cmt">// Ray::at(t) computes P(t) and returns it as a Points3</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Ray Parameterisation</div>
+      <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14;padding:10px 20px">
+        <!-- axis -->
+        <line x1="60" y1="80" x2="640" y2="80" stroke="#2a2a3a" stroke-width="1"/>
+        <!-- ray -->
+        <line x1="80" y1="80" x2="600" y2="80" stroke="#f7c96a" stroke-width="2" marker-end="url(#arr-ray)"/>
+        <defs>
+          <marker id="arr-ray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#f7c96a"/>
+          </marker>
+        </defs>
+        <!-- O -->
+        <circle cx="80" cy="80" r="5" fill="#7c6af7"/>
+        <text x="72" y="100" fill="#7c6af7" font-size="12" font-family="monospace">O</text>
+        <!-- t=1 -->
+        <circle cx="230" cy="80" r="3" fill="#888"/>
+        <text x="222" y="100" fill="#888" font-size="11" font-family="monospace">t=1</text>
+        <!-- t=2 -->
+        <circle cx="380" cy="80" r="3" fill="#888"/>
+        <text x="372" y="100" fill="#888" font-size="11" font-family="monospace">t=2</text>
+        <!-- hit -->
+        <circle cx="450" cy="80" r="6" fill="#6af7c8"/>
+        <text x="442" y="64" fill="#6af7c8" font-size="12" font-family="monospace">hit</text>
+        <text x="432" y="100" fill="#6af7c8" font-size="11" font-family="monospace">t_hit</text>
+        <!-- sphere -->
+        <circle cx="510" cy="80" r="50" stroke="#6af7c8" stroke-width="1" fill="rgba(106,247,200,.04)"/>
+        <!-- formula -->
+        <text x="60" y="140" fill="#f7c96a" font-size="12" font-family="monospace">P(t) = O + t · D</text>
+        <text x="300" y="140" fill="#888" font-size="11" font-family="monospace">smallest positive t_hit wins (closest intersection)</text>
+      </svg>
+    </div>
+
+    <h3>Rodrigues' Rotation Formula</h3>
+    <p>Used in <code>utils.hpp → rotateAroundAxis()</code> and by the light movement system to rotate a vector around an arbitrary axis without building a full rotation matrix:</p>
+
+    <div class="math-block">
+      <span class="cmt">// Rotate vector v by angle θ around unit axis k:</span>
+      <span class="eq">v′  =  v cosθ  +  (k × v) sinθ  +  k (k · v)(1 − cosθ)</span>
+      <span class="cmt">// Term 1: the component of v in the plane, scaled by cosθ</span>
+      <span class="cmt">// Term 2: perpendicular rotation component (cross product)</span>
+      <span class="cmt">// Term 3: the axial component k(k·v) unchanged times (1−cosθ) correction</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Rodrigues' Rotation — decomposition of v into axial + perpendicular components</div>
+      <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14">
+        <defs>
+          <marker id="av" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f7c96a"/></marker>
+          <marker id="ak" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c6af7"/></marker>
+          <marker id="an" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6af7c8"/></marker>
+          <marker id="ar" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f76adc"/></marker>
+        </defs>
+        <!-- rotation circle (the perpendicular plane) -->
+        <ellipse cx="400" cy="120" rx="120" ry="50" stroke="#2a2a3a" stroke-width="1.5" fill="none" stroke-dasharray="6,4"/>
+        <!-- axis k (vertical) -->
+        <line x1="400" y1="30" x2="400" y2="210" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#ak)"/>
+        <text x="408" y="28" fill="#7c6af7" font-size="13" font-family="monospace">k (axis)</text>
+        <!-- v original -->
+        <line x1="400" y1="120" x2="490" y2="75" stroke="#f7c96a" stroke-width="2" marker-end="url(#av)"/>
+        <text x="494" y="72" fill="#f7c96a" font-size="12" font-family="monospace">v</text>
+        <!-- v rotated -->
+        <line x1="400" y1="120" x2="310" y2="75" stroke="#f76adc" stroke-width="2" marker-end="url(#ar)"/>
+        <text x="284" y="72" fill="#f76adc" font-size="12" font-family="monospace">v′</text>
+        <!-- axial projection on k -->
+        <line x1="400" y1="120" x2="400" y2="75" stroke="#6af7c8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#an)"/>
+        <text x="404" y="100" fill="#6af7c8" font-size="11" font-family="monospace">k(k·v)</text>
+        <!-- perp -->
+        <line x1="400" y1="75" x2="490" y2="75" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="430" y="70" fill="#888" font-size="10" font-family="monospace">v⊥</text>
+        <!-- arc -->
+        <path d="M 480,80 A 85,35 0 0 0 315,80" stroke="#f7c96a" stroke-width="1" fill="none" stroke-dasharray="4,4"/>
+        <text x="385" y="160" fill="#888" font-size="12" font-family="monospace">θ</text>
+        <!-- formula reminder -->
+        <text x="30" y="210" fill="#f76adc" font-size="12" font-family="monospace">v′ = v cosθ + (k×v) sinθ + k(k·v)(1−cosθ)</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ OBJECTS -->
+<section id="objects">
+  <div class="container">
+    <div class="section-label">04 — Geometric Objects</div>
+    <h2>Ray–Object Intersection</h2>
+    <p>Each shape implements <code>intersect(const Ray&amp; ray, double&amp; t_hit)</code>. The function solves the algebraic equation <em>P(t) ∈ surface</em> for the smallest positive <em>t</em>.</p>
+
+    <!-- SPHERE -->
+    <h3>🔵 Sphere</h3>
+    <p>A sphere is the set of points at distance <em>r</em> from center <em>C</em>:</p>
+    <div class="math-block">
+      <span class="cmt">// Sphere implicit equation:</span>
+      <span class="eq">|P − C|² = r²</span>
+      <span class="cmt">// Substitute P = O + tD  (let oc = O − C):</span>
+      <span class="eq">|oc + tD|² = r²</span>
+      <span class="eq">(D·D)t² + 2(oc·D)t + (oc·oc − r²) = 0</span>
+      <br>
+      <span class="cmt">// Quadratic: at² + bt + c = 0</span>
+      <span class="eq">a = D·D,   b = 2(oc·D),   c = oc·oc − r²</span>
+      <span class="eq">Δ = b² − 4ac</span>
+      <span class="cmt">// Δ &lt; 0 → miss.  Δ ≥ 0 → t = (−b ± √Δ) / (2a)</span>
+      <span class="cmt">// Pick smallest positive t.  Normal = normalize(P − C).</span>
+    </div>
+
+    <!-- PLANE -->
+    <h3>🟦 Plane</h3>
+    <p>A plane is defined by a point <em>p₀</em> on it and a normal <em>n</em>. Every point <em>P</em> in the plane satisfies <code>(P − p₀) · n = 0</code>.</p>
+    <div class="math-block">
+      <span class="cmt">// Substitute the ray:</span>
+      <span class="eq">(O + tD − p₀) · n = 0</span>
+      <span class="eq">t = ( (p₀ − O) · n ) / (D · n)</span>
+      <span class="cmt">// If |D·n| &lt; ε → ray is parallel to plane → no intersection.</span>
+      <span class="cmt">// Normal is constant: normalize(n).  t ≥ 0 required.</span>
+    </div>
+
+    <!-- CYLINDER -->
+    <h3>🟧 Cylinder</h3>
+    <p>An infinite cylinder with center <em>C</em>, unit axis <em>â</em>, and radius <em>r</em>. The trick is to decompose the ray and offset vector into components <em>perpendicular</em> to the axis — the axial component doesn't affect the radius.</p>
+    <div class="math-block">
+      <span class="cmt">// Project D and oc = O−C onto the plane ⊥ to axis:</span>
+      <span class="eq">D⊥  = D − â (D·â)</span>
+      <span class="eq">oc⊥ = oc − â (oc·â)</span>
+      <span class="cmt">// Solve 2D circle intersection in that plane:</span>
+      <span class="eq">a = D⊥·D⊥,   b = 2(oc⊥·D⊥),   c = oc⊥·oc⊥ − r²</span>
+      <span class="eq">Δ = b² − 4ac</span>
+      <span class="cmt">// After finding t, clamp to finite height:</span>
+      <span class="eq">|( P(t) − C ) · â|  ≤  half_height</span>
+      <span class="cmt">// Normal = normalize( oc − â(oc·â) ) — radial vector from axis to surface.</span>
+    </div>
+
+    <!-- CONE -->
+    <h3>🔺 Cone</h3>
+    <p>A cone with apex <em>A</em>, unit axis <em>â</em>, and half-angle <em>θ</em>. A point <em>P</em> is on the surface when the angle between <em>(P−A)</em> and <em>â</em> equals <em>θ</em>.</p>
+    <div class="math-block">
+      <span class="cmt">// Cone surface condition (squared to remove absolute value):</span>
+      <span class="eq">((P−A)·â)²  =  cos²(θ) · |P−A|²</span>
+      <span class="cmt">// Substitute P = O + tD, oc = O − A:</span>
+      <span class="eq">a = (D·â)² − cos²θ (D·D)</span>
+      <span class="eq">b = 2[ (D·â)(oc·â) − cos²θ (oc·D) ]</span>
+      <span class="eq">c = (oc·â)² − cos²θ (oc·oc)</span>
+      <span class="cmt">// Solve at² + bt + c = 0, pick smallest positive t.</span>
+      <span class="cmt">// Clamp: projection = (P−A)·â must be in [0, half_height].</span>
+      <span class="cmt">// Also intersect the circular base disk at projection = half_height.</span>
+      <span class="cmt">// Normal = normalize(perpendicular component of P−A from axis).</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Cross-section: Ray hitting a Sphere, Cylinder, Cone, and Plane</div>
+      <svg viewBox="0 0 860 220" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14">
+        <defs>
+          <marker id="ar2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f7c96a"/></marker>
+          <marker id="an2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6af7c8"/></marker>
+        </defs>
+
+        <!-- Camera -->
+        <circle cx="30" cy="110" r="5" fill="#7c6af7"/>
+        <text x="10" y="130" fill="#7c6af7" font-size="10" font-family="monospace">cam</text>
+
+        <!-- ray line -->
+        <line x1="30" y1="110" x2="830" y2="110" stroke="#f7c96a" stroke-width="1.5" stroke-dasharray="0" marker-end="url(#ar2)"/>
+
+        <!-- SPHERE -->
+        <circle cx="170" cy="110" r="45" stroke="#f76a8a" stroke-width="1.5" fill="rgba(247,106,138,.06)"/>
+        <text x="148" y="175" fill="#f76a8a" font-size="11" font-family="monospace">Sphere</text>
+        <circle cx="127" cy="110" r="4" fill="#f7c96a"/>
+        <line x1="127" y1="110" x2="90"  y2="75" stroke="#6af7c8" stroke-width="1.5" marker-end="url(#an2)"/>
+        <text x="80" y="68" fill="#6af7c8" font-size="9" font-family="monospace">N</text>
+
+        <!-- CYLINDER (side view) -->
+        <rect x="270" y="65" width="50" height="90" rx="3" stroke="#f78c6c" stroke-width="1.5" fill="rgba(247,140,108,.06)"/>
+        <text x="258" y="175" fill="#f78c6c" font-size="11" font-family="monospace">Cylinder</text>
+        <circle cx="270" cy="110" r="4" fill="#f7c96a"/>
+        <line x1="270" y1="110" x2="240" y2="110" stroke="#6af7c8" stroke-width="1.5" marker-end="url(#an2)"/>
+        <text x="220" y="106" fill="#6af7c8" font-size="9" font-family="monospace">N</text>
+
+        <!-- CONE (side view triangle) -->
+        <polygon points="490,65 450,155 530,155" stroke="#f7c96a" stroke-width="1.5" fill="rgba(247,201,106,.06)"/>
+        <text x="468" y="175" fill="#f7c96a" font-size="11" font-family="monospace">Cone</text>
+        <circle cx="466" cy="110" r="4" fill="#f7c96a"/>
+        <line x1="466" y1="110" x2="440" y2="88" stroke="#6af7c8" stroke-width="1.5" marker-end="url(#an2)"/>
+        <text x="425" y="84" fill="#6af7c8" font-size="9" font-family="monospace">N</text>
+
+        <!-- PLANE (vertical) -->
+        <line x1="640" y1="40" x2="640" y2="185" stroke="#82aaff" stroke-width="2"/>
+        <text x="624" y="196" fill="#82aaff" font-size="11" font-family="monospace">Plane</text>
+        <circle cx="640" cy="110" r="4" fill="#f7c96a"/>
+        <line x1="640" y1="110" x2="610" y2="110" stroke="#6af7c8" stroke-width="1.5" marker-end="url(#an2)"/>
+        <text x="592" y="106" fill="#6af7c8" font-size="9" font-family="monospace">N</text>
+
+        <!-- t_hit labels -->
+        <text x="122" y="100" fill="#f7c96a" font-size="9" font-family="monospace">t₁</text>
+        <text x="264" y="100" fill="#f7c96a" font-size="9" font-family="monospace">t₂</text>
+        <text x="460" y="100" fill="#f7c96a" font-size="9" font-family="monospace">t₃</text>
+        <text x="634" y="100" fill="#f7c96a" font-size="9" font-family="monospace">t₄</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ LIGHTING -->
+<section id="lighting">
+  <div class="container">
+    <div class="section-label">05 — Lighting</div>
+    <h2>Phong Illumination Model</h2>
+    <p>
+      The Phong model splits the light arriving at a surface point into three components: <strong>ambient</strong> (constant base brightness so nothing is fully black), <strong>diffuse</strong> (matte, angle-dependent), and <strong>specular</strong> (shiny highlight).
+    </p>
+
+    <div class="math-block">
+      <span class="cmt">// For each light L with intensity Iₗ:</span>
+      <span class="eq">I  =  Iₐ·Cₒ  +  Σ Iₗ [ Kd·Cₒ·(N̂·L̂)  +  Ks·(R̂·V̂)ⁿ ]</span>
+      <br>
+      <span class="cmt">// Symbols:</span>
+      <span class="cmt">// Iₐ   = ambient intensity (0.2 × object color when in shadow)</span>
+      <span class="cmt">// Cₒ   = object color (RGB 0–255)</span>
+      <span class="cmt">// N̂    = surface normal (unit vector, outward)</span>
+      <span class="cmt">// L̂    = direction to light source (normalized)</span>
+      <span class="cmt">// R̂    = reflection of L̂ about N̂  =  2(N̂·L̂)N̂ − L̂</span>
+      <span class="cmt">// V̂    = view direction (from hit point to camera, normalized)</span>
+      <span class="cmt">// n    = shininess exponent (higher → sharper highlight)</span>
+      <span class="cmt">// max(0,…) clamps negative dot products (light behind surface)</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Phong Shading Geometry at a Surface Point</div>
+      <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14">
+        <defs>
+          <marker id="aL" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#fff5a0"/></marker>
+          <marker id="aN3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6af7c8"/></marker>
+          <marker id="aV" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c792ea"/></marker>
+          <marker id="aR" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f76adc"/></marker>
+        </defs>
+
+        <!-- surface -->
+        <line x1="80" y1="160" x2="620" y2="160" stroke="#555" stroke-width="2"/>
+        <!-- surface texture lines -->
+        <line x1="100" y1="160" x2="100" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="140" y1="160" x2="140" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="180" y1="160" x2="180" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="220" y1="160" x2="220" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="260" y1="160" x2="260" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="300" y1="160" x2="300" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="340" y1="160" x2="340" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="380" y1="160" x2="380" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="420" y1="160" x2="420" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="460" y1="160" x2="460" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="500" y1="160" x2="500" y2="168" stroke="#444" stroke-width="1"/>
+        <line x1="540" y1="160" x2="540" y2="168" stroke="#444" stroke-width="1"/>
+
+        <!-- hit point -->
+        <circle cx="350" cy="160" r="5" fill="white"/>
+        <text x="356" y="175" fill="#888" font-size="11" font-family="monospace">P (hit point)</text>
+
+        <!-- N (normal) -->
+        <line x1="350" y1="160" x2="350" y2="50" stroke="#6af7c8" stroke-width="2" marker-end="url(#aN3)"/>
+        <text x="358" y="48" fill="#6af7c8" font-size="13" font-family="monospace">N̂</text>
+
+        <!-- L (to light) -->
+        <line x1="350" y1="160" x2="160" y2="60" stroke="#fff5a0" stroke-width="2" marker-end="url(#aL)"/>
+        <text x="138" y="55" fill="#fff5a0" font-size="13" font-family="monospace">L̂</text>
+        <!-- light source -->
+        <circle cx="120" cy="40" r="12" fill="#fff5a0" opacity="0.8"/>
+        <text x="105" y="24" fill="#fff5a0" font-size="10" font-family="monospace">Light</text>
+
+        <!-- V (to camera) -->
+        <line x1="350" y1="160" x2="560" y2="60" stroke="#c792ea" stroke-width="2" marker-end="url(#aV)"/>
+        <text x="562" y="58" fill="#c792ea" font-size="13" font-family="monospace">V̂</text>
+        <!-- camera -->
+        <circle cx="600" cy="40" r="8" fill="#7c6af7"/>
+        <text x="585" y="24" fill="#7c6af7" font-size="10" font-family="monospace">Camera</text>
+
+        <!-- R (reflection of L) -->
+        <line x1="350" y1="160" x2="540" y2="60" stroke="#f76adc" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#aR)"/>
+        <text x="540" y="55" fill="#f76adc" font-size="13" font-family="monospace">R̂</text>
+
+        <!-- angle labels -->
+        <!-- N-L angle arc -->
+        <path d="M 350,135 A 25,25 0 0 0 328,147" stroke="#fff5a0" stroke-width="1" fill="none"/>
+        <text x="314" y="136" fill="#fff5a0" font-size="10" font-family="monospace">θ</text>
+
+        <!-- legend -->
+        <rect x="80" y="200" width="540" height="60" rx="4" fill="rgba(20,20,30,.8)" stroke="#2a2a3a" stroke-width="1"/>
+        <line x1="95" y1="218" x2="115" y2="218" stroke="#fff5a0" stroke-width="2"/><text x="120" y="222" fill="#888" font-size="10" font-family="monospace">L̂  direction to light</text>
+        <line x1="95" y1="234" x2="115" y2="234" stroke="#6af7c8" stroke-width="2"/><text x="120" y="238" fill="#888" font-size="10" font-family="monospace">N̂  surface normal</text>
+        <line x1="250" y1="218" x2="270" y2="218" stroke="#c792ea" stroke-width="2"/><text x="275" y="222" fill="#888" font-size="10" font-family="monospace">V̂  view direction</text>
+        <line x1="250" y1="234" x2="270" y2="234" stroke="#f76adc" stroke-width="2" stroke-dasharray="5,3"/><text x="275" y="238" fill="#888" font-size="10" font-family="monospace">R̂  reflection of L̂ about N̂</text>
+        <text x="95" y="254" fill="#888" font-size="10" font-family="monospace">Diffuse: max(0, N̂·L̂) · Cₒ · Iₗ</text>
+        <text x="340" y="254" fill="#888" font-size="10" font-family="monospace">Specular: max(0, R̂·V̂)ⁿ · white · Iₗ</text>
+      </svg>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>Lambert Diffuse</h4>
+        <p>Brightness is proportional to the cosine of the angle between the surface normal <em>N̂</em> and the light direction <em>L̂</em>. This is <em>N̂ · L̂</em>. A surface facing the light directly (θ = 0°) gets full brightness; grazing angles give near zero.</p>
+      </div>
+      <div class="card">
+        <h4>Phong Specular</h4>
+        <p>The specular term depends on how close the viewer <em>V̂</em> is to the perfect mirror direction <em>R̂</em>. The exponent <em>n</em> (shininess) controls the tightness. High shininess (e.g. 64) = small sharp metallic highlight. Low shininess (e.g. 4) = large diffuse glow.</p>
+      </div>
+    </div>
+
+    <h3>Multiple Lights &amp; Attenuation</h3>
+    <p>The scene accumulates contributions from every light. Diffuse and specular totals are clamped to [0, 1] to prevent oversaturation, then combined into the final RGB pixel value:</p>
+    <pre><code><span class="kw">int</span> r = (<span class="kw">int</span>)(diffuse * color.r + specular * <span class="num">255.0</span>);
+<span class="kw">int</span> g = (<span class="kw">int</span>)(diffuse * color.g + specular * <span class="num">255.0</span>);
+<span class="kw">int</span> b = (<span class="kw">int</span>)(diffuse * color.b + specular * <span class="num">255.0</span>);</code></pre>
+    <p>Specular uses white (255) because highlights on most surfaces appear white regardless of the object's base color.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ REFLECTIONS -->
+<section id="reflections">
+  <div class="container">
+    <div class="section-label">06 — Shadows &amp; Reflections</div>
+    <h2>Shadow Rays and Recursive Reflections</h2>
+
+    <h3>Shadow Testing</h3>
+    <p>After finding a hit, a <strong>shadow ray</strong> is cast from the hit point toward each light. If any other object blocks the path, the contribution of that light is replaced by ambient-only lighting.</p>
+
+    <div class="math-block">
+      <span class="cmt">// Shadow ray:</span>
+      <span class="eq">S(t) = P_hit + ε·L̂  +  t · L̂</span>
+      <span class="cmt">// ε (epsilon = 1e-4) offsets origin slightly to avoid self-intersection.</span>
+      <span class="cmt">// Only count an occluder if:  ε &lt; t &lt; distance_to_light</span>
+      <span class="cmt">// (prevents objects behind the light from casting shadows)</span>
+    </div>
+
+    <h3>Reflections — Recursive Ray Casting</h3>
+    <p>If an object has <code>reflectivity &gt; 0</code>, a reflected ray is spawned. The color contributed by the reflection is blended with direct lighting using linear interpolation:</p>
+
+    <div class="math-block">
+      <span class="cmt">// Reflected ray direction (incoming ray I hits surface normal N):</span>
+      <span class="eq">R = I − 2(I · N̂) N̂</span>
+      <span class="cmt">// (The component of I along N is reversed; the tangential component unchanged)</span>
+      <br>
+      <span class="cmt">// Color blending:</span>
+      <span class="eq">C_final = C_direct · (1 − reflectivity)  +  C_reflected · reflectivity</span>
+      <span class="cmt">// Recursion terminates at depth = 3 (returns background color)</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Recursive Reflection (depth = 2 shown)</div>
+      <svg viewBox="0 0 780 260" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14">
+        <defs>
+          <marker id="a1" markerWidth="7" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f7c96a"/></marker>
+          <marker id="a2" markerWidth="7" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f76adc"/></marker>
+          <marker id="a3" markerWidth="7" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f78c6c"/></marker>
+          <marker id="a4" markerWidth="7" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6af7c8"/></marker>
+        </defs>
+
+        <!-- camera -->
+        <circle cx="40" cy="80" r="7" fill="#7c6af7"/>
+        <text x="20" y="100" fill="#7c6af7" font-size="10" font-family="monospace">camera</text>
+
+        <!-- primary ray -->
+        <line x1="40" y1="80" x2="230" y2="160" stroke="#f7c96a" stroke-width="1.5" marker-end="url(#a1)"/>
+        <text x="80" y="100" fill="#f7c96a" font-size="10" font-family="monospace">primary ray (d=0)</text>
+
+        <!-- sphere 1 (reflective) -->
+        <circle cx="270" cy="160" r="40" stroke="#f76a8a" stroke-width="1.5" fill="rgba(247,106,138,.06)"/>
+        <text x="250" y="215" fill="#f76a8a" font-size="10" font-family="monospace">reflective (ρ=0.6)</text>
+        <circle cx="230" cy="165" r="4" fill="#f76adc"/>
+
+        <!-- normal at hit1 -->
+        <line x1="230" y1="165" x2="200" y2="140" stroke="#6af7c8" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#a4)"/>
+        <text x="182" y="135" fill="#6af7c8" font-size="9" font-family="monospace">N̂</text>
+
+        <!-- reflection ray 1 -->
+        <line x1="230" y1="165" x2="450" y2="80" stroke="#f76adc" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="300" y="110" fill="#f76adc" font-size="10" font-family="monospace">reflection ray (d=1)</text>
+
+        <!-- sphere 2 -->
+        <circle cx="490" cy="80" r="35" stroke="#82aaff" stroke-width="1.5" fill="rgba(130,170,255,.06)"/>
+        <text x="470" y="130" fill="#82aaff" font-size="10" font-family="monospace">object (d=2)</text>
+        <circle cx="455" cy="84" r="4" fill="#f78c6c"/>
+
+        <!-- normal at hit2 -->
+        <line x1="455" y1="84" x2="425" y2="64" stroke="#6af7c8" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#a4)"/>
+
+        <!-- reflection ray 2 -->
+        <line x1="455" y1="84" x2="640" y2="50" stroke="#f78c6c" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a3)"/>
+        <text x="540" y="45" fill="#f78c6c" font-size="10" font-family="monospace">depth=2 → shade only</text>
+
+        <!-- depth labels -->
+        <rect x="30" y="225" width="720" height="24" rx="4" fill="rgba(20,20,30,.8)" stroke="#2a2a3a" stroke-width="1"/>
+        <text x="45"  y="241" fill="#f7c96a" font-size="10" font-family="monospace">depth 0: primary</text>
+        <text x="240" y="241" fill="#f76adc" font-size="10" font-family="monospace">depth 1: reflection</text>
+        <text x="450" y="241" fill="#f78c6c" font-size="10" font-family="monospace">depth 2: reflection of reflection (stops at 3)</text>
+
+        <!-- C_final formula -->
+        <text x="30" y="200" fill="#888" font-size="11" font-family="monospace">C_final = C_direct·(1−ρ) + C_reflected·ρ     (ρ = reflectivity)</text>
+      </svg>
+    </div>
+
+    <div class="highlight">
+      <strong>Depth limit:</strong> Recursion is capped at depth 3. At depth ≥ 3 the function returns the background color (blue). This prevents infinite loops when two mirrors face each other and keeps render times bounded.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ CAMERA -->
+<section id="camera">
+  <div class="container">
+    <div class="section-label">07 — Camera</div>
+    <h2>Perspective Camera &amp; Ray Generation</h2>
+    <p>The camera uses a simple pinhole / perspective model. Each pixel <em>(x, y)</em> is mapped to a normalized device coordinate (NDC) in [−1, 1]², then a ray is fired through that screen point.</p>
+
+    <div class="math-block">
+      <span class="cmt">// NDC mapping — centre of pixel (x,y) in [IMG_WIDTH × IMG_HEIGHT]:</span>
+      <span class="eq">px  =  (2x / W) − 1           maps  [0, W] → [−1, +1]</span>
+      <span class="eq">py  =  1 − (2y / H)           maps  [0, H] → [+1, −1]  (Y flipped)</span>
+      <span class="cmt">// Ray direction (in camera space, z forward = −1):</span>
+      <span class="eq">D  =  (px,  py,  −1)          (not normalized — intersectors handle that)</span>
+      <span class="cmt">// The ray origin is the camera position.</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Camera → Image Plane → Scene (perspective projection)</div>
+      <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d14">
+        <defs>
+          <marker id="aray" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f7c96a"/></marker>
+        </defs>
+
+        <!-- camera point -->
+        <circle cx="80" cy="115" r="8" fill="#7c6af7"/>
+        <text x="55" y="135" fill="#7c6af7" font-size="10" font-family="monospace">Camera</text>
+        <text x="52" y="148" fill="#7c6af7" font-size="10" font-family="monospace">position</text>
+
+        <!-- image plane -->
+        <rect x="200" y="30" width="12" height="170" fill="rgba(124,106,247,.15)" stroke="#7c6af7" stroke-width="1.5"/>
+        <text x="170" y="22" fill="#7c6af7" font-size="9" font-family="monospace">Image Plane</text>
+        <text x="170" y="34" fill="#7c6af7" font-size="9" font-family="monospace">z = -1</text>
+        <!-- pixel labels on plane -->
+        <text x="216" y="42" fill="#888" font-size="9" font-family="monospace">(−1,+1)</text>
+        <text x="216" y="120" fill="#f7c96a" font-size="9" font-family="monospace">(px, py)</text>
+        <text x="216" y="198" fill="#888" font-size="9" font-family="monospace">(+1,−1)</text>
+        <circle cx="206" cy="115" r="3" fill="#f7c96a"/>
+
+        <!-- rays -->
+        <line x1="80" y1="115" x2="550" y2="40"  stroke="#f7c96a" stroke-width="1" stroke-dasharray="5,3" opacity="0.5"/>
+        <line x1="80" y1="115" x2="550" y2="115" stroke="#f7c96a" stroke-width="1.5" marker-end="url(#aray)"/>
+        <line x1="80" y1="115" x2="550" y2="190" stroke="#f7c96a" stroke-width="1" stroke-dasharray="5,3" opacity="0.5"/>
+
+        <!-- scene -->
+        <circle cx="500" cy="115" r="40" stroke="#6af7c8" stroke-width="1.5" fill="rgba(106,247,200,.04)"/>
+        <text x="478" y="170" fill="#6af7c8" font-size="10" font-family="monospace">Scene</text>
+
+        <!-- axes on camera -->
+        <line x1="80" y1="115" x2="80" y2="70"  stroke="#888" stroke-width="1"/><text x="84" y="68" fill="#888" font-size="9" font-family="monospace">+Y</text>
+        <line x1="80" y1="115" x2="125" y2="115" stroke="#888" stroke-width="1"/><text x="128" y="118" fill="#888" font-size="9" font-family="monospace">+X</text>
+
+        <!-- FOV annotation -->
+        <path d="M 80,115 L 200,40" stroke="#c792ea" stroke-width="1" fill="none"/>
+        <path d="M 80,115 L 200,190" stroke="#c792ea" stroke-width="1" fill="none"/>
+        <path d="M 120,95 A 40,40 0 0 1 120,135" stroke="#c792ea" stroke-width="1" fill="none"/>
+        <text x="128" y="120" fill="#c792ea" font-size="10" font-family="monospace">FOV</text>
+      </svg>
+    </div>
+
+    <h3>Camera Movement</h3>
+    <p>Three movement functions let you navigate the scene at runtime. They all rebuild the camera's position vector using the current orientation:</p>
+
+    <table>
+      <thead><tr><th>Method</th><th>Math</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>moveForward(d)</td><td>pos += normalize(dir) · d</td><td>Move along look direction</td></tr>
+        <tr><td>moveRight(d)</td><td>pos += normalize(dir × (0,1,0)) · d</td><td>Strafe using cross product with world-up</td></tr>
+        <tr><td>moveUp(d)</td><td>pos += (0,1,0) · d</td><td>Move along world Y axis</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ CONTROLS -->
+<section id="controls">
+  <div class="container">
+    <div class="section-label">08 — Controls</div>
+    <h2>Interactive Controls</h2>
+    <p>The renderer is interactive via keyboard and mouse, using MiniLibX hooks.</p>
+
+    <h3 class="sub">Camera</h3>
+    <div class="key-table">
+      <div class="key-row"><span class="key">W</span> Move forward</div>
+      <div class="key-row"><span class="key">S</span> Move backward</div>
+      <div class="key-row"><span class="key">A</span> Strafe left</div>
+      <div class="key-row"><span class="key">D</span> Strafe right</div>
+    </div>
+
+    <h3 class="sub">Light</h3>
+    <div class="key-table">
+      <div class="key-row"><span class="key">↑</span> Rotate light up (around X axis)</div>
+      <div class="key-row"><span class="key">↓</span> Rotate light down</div>
+      <div class="key-row"><span class="key">←</span> Rotate light left (around Y axis)</div>
+      <div class="key-row"><span class="key">→</span> Rotate light right</div>
+      <div class="key-row"><span class="key">SPACE</span> Cycle to next light</div>
+    </div>
+
+    <h3 class="sub">Selected Object (click to select)</h3>
+    <div class="key-table">
+      <div class="key-row"><span class="key">Q</span> Translate −X</div>
+      <div class="key-row"><span class="key">E</span> Translate +X</div>
+      <div class="key-row"><span class="key">Z</span> Translate +Y</div>
+      <div class="key-row"><span class="key">X</span> Translate −Y</div>
+      <div class="key-row"><span class="key">R</span> Rotate around X axis (+0.1 rad)</div>
+      <div class="key-row"><span class="key">T</span> Rotate around Y axis (+0.1 rad)</div>
+      <div class="key-row"><span class="key">Y</span> Rotate around Z axis (+0.1 rad)</div>
+    </div>
+
+    <h3 class="sub">Mouse</h3>
+    <div class="key-table">
+      <div class="key-row"><span class="key">Left Click</span> Select object under cursor (casts a pick ray)</div>
+    </div>
+    <div class="key-table">
+      <div class="key-row"><span class="key">ESC</span> Close window and exit</div>
+    </div>
+
+    <div class="highlight">
+      <strong>Object selection</strong> works by firing a pick ray through the clicked pixel (same <code>getRay(x, y)</code> as rendering), finding the closest intersection, and storing a pointer to that <code>Objects*</code>. Transform keys then operate on that stored pointer via the polymorphic <code>translate()</code> / <code>rotateX/Y/Z()</code> interface.
+    </div>
+
+    <h3>Scene Configuration (main.cpp)</h3>
+    <p>Objects and lights are added programmatically in <code>main()</code>:</p>
+    <pre><code><span class="cm">// Sphere: radius, center, color, shininess, transparency, reflectivity</span>
+scene.<span class="fn">addObject</span>(make_unique&lt;<span class="tp">Sphere</span>&gt;(<span class="num">1.0</span>, Points3(<span class="num">2,1,-5</span>), Vec3(<span class="num">255,0,0</span>), <span class="num">64.0</span>, <span class="num">0.0</span>, <span class="num">0.6</span>));
+
+<span class="cm">// Cone: apex, axis, half_angle, half_height, color, shininess, transparency</span>
+scene.<span class="fn">addObject</span>(make_unique&lt;<span class="tp">Cone</span>&gt;(Points3(<span class="num">0,-1,-2</span>), Vec3(<span class="num">0,1,0</span>), <span class="num">0.4</span>, <span class="num">2.0</span>, Vec3(<span class="num">0,255,0</span>), <span class="num">16.0</span>, <span class="num">0.5</span>));
+
+<span class="cm">// Plane: normal, point, color, shininess, transparency, reflectivity</span>
+scene.<span class="fn">addObject</span>(make_unique&lt;<span class="tp">Plane</span>&gt;(Vec3(<span class="num">0,1,0</span>), Points3(<span class="num">3,-1,-6</span>), Vec3(<span class="num">255,255,0</span>), <span class="num">32.0</span>, <span class="num">0.0</span>, <span class="num">0.7</span>));
+
+<span class="cm">// Light: intensity, angle (unused), position</span>
+scene.<span class="fn">addLight</span>(Light(<span class="num">1.0</span>, <span class="num">0</span>, Vec3(<span class="num">-1,1,-1</span>)));
+scene.<span class="fn">addLight</span>(Light(<span class="num">0.8</span>, <span class="num">0</span>, Vec3(<span class="num">2,2,-2</span>)));</code></pre>
+
+    <hr>
+    <p style="color:var(--muted); font-family: 'Space Mono', monospace; font-size:0.78rem; margin-top: 30px;">
+      RT — C++ Ray Tracer &nbsp;|&nbsp; Phong shading &nbsp;·&nbsp; Shadows &nbsp;·&nbsp; Reflections &nbsp;·&nbsp; MiniLibX &nbsp;|&nbsp; 800×600 &nbsp;·&nbsp; depth ≤ 3
+    </p>
+  </div>
+</section>
+
+</body>
+</html>
