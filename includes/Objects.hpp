@@ -15,7 +15,7 @@ public:
     Objects(const Vec3& _color, double _shininess);
     Objects(const Vec3& _color, double _shininess, double _transparency);
     Objects(const Vec3& _color, double _shininess, double _transparency, double _reflectivity);
-    ~Objects();
+    virtual ~Objects();
 
     Vec3 getColor() const;
     void setColor(const Vec3& _color);

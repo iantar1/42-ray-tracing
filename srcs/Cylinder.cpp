@@ -41,9 +41,13 @@ bool Cylinder::intersect(const Ray& ray, double& t_hit) {
     // Vector from cylinder center to ray origin
     Vec3 oc = O - this->center;
 
+    // Precompute axis projections reused for both the quadratic and height checks
+    double D_dot_axis  = Vec3::dot(D, this->axis);
+    double oc_dot_axis = Vec3::dot(oc, this->axis);
+
     // Project ray direction and origin onto plane perpendicular to axis
-    Vec3 D_perp = D - this->axis * Vec3::dot(D, this->axis);
-    Vec3 oc_perp = oc - this->axis * Vec3::dot(oc, this->axis);
+    Vec3 D_perp  = D  - this->axis * D_dot_axis;
+    Vec3 oc_perp = oc - this->axis * oc_dot_axis;
 
     // Quadratic coefficients for intersection with infinite cylinder
     double a = Vec3::dot(D_perp, D_perp);
@@ -60,15 +64,21 @@ bool Cylinder::intersect(const Ray& ray, double& t_hit) {
     double t0 = (-b - sqrt_disc) / (2.0*a);
     double t1 = (-b + sqrt_disc) / (2.0*a);
 
-    // Pick smallest positive t
-    double t = (t0 > 1e-6) ? t0 : t1;
-    if (t < 1e-6) return false;
+    // Height check: (oc + t*D)·axis = oc_dot_axis + t*D_dot_axis
+    // Avoids computing the full 3D hit point just to check bounds
+    double t = -1.0;
 
-    // Clamp to finite cylinder height along the axis
-    Vec3 hit_point = O + D * t;
-    double axis_projection = Vec3::dot(hit_point - center, this->axis);
-    if (std::abs(axis_projection) > half_height) return false;
+    if (t0 > 1e-6) {
+        if (std::abs(oc_dot_axis + t0 * D_dot_axis) <= half_height)
+            t = t0;
+    }
 
+    if (t < 0 && t1 > 1e-6) {
+        if (std::abs(oc_dot_axis + t1 * D_dot_axis) <= half_height)
+            t = t1;
+    }
+
+    if (t < 0) return false;
     t_hit = t;
     return true;
 }

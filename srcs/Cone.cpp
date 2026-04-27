@@ -138,12 +138,9 @@ bool Cone::intersect(const Ray& ray, double& t_hit)
             // The base radius is the radius at the bottom of the cone
             double base_radius = half_height * tan(half_angle);
             
-            // Calculate perpendicular distance from hit point to the axis
             Vec3 axis_proj = axis * Vec3::dot(hit_to_apex, axis);
             Vec3 perp = hit_to_apex - axis_proj;
-            double distance = sqrt(Vec3::dot(perp, perp));
-            
-            if (distance <= base_radius)
+            if (Vec3::dot(perp, perp) <= base_radius * base_radius)
                 t_base = t;
         }
     }

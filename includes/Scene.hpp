@@ -37,14 +37,17 @@ public:
     void*   mlx;
     void*   win;
     void*   img;
+    int     width;
+    int     height;
 
     Scene();
-    Scene(const Scene&) = delete;// Delete copy — Scene cannot be copied (because unique_ptr can't)
+    Scene(const Scene&) = delete;
     Scene& operator=(const Scene&) = delete;
     Scene(int _size_line, int _bytes_per_pixel, void* _image_data);
     Scene(void*);
     ~Scene();
     Camera camera;
+    void setDimensions(int w, int h);
     
     
     int computeLighting(const Vec3& hit, const Sphere& obj);

@@ -1,0 +1,40 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: iharchi <iharchi@student.1337.ma>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/11/02 20:13:21 by iharchi           #+#    #+#              #
+#    Updated: 2026/04/27 09:07:24 by iharchi          ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+
+NAME = RT
+
+SRCS = srcs/*.cpp
+
+UNAME := $(shell uname -s)
+PLATFORM ?= $(UNAME)
+
+FLAGS = -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
+DEBUG = -g
+MLX = libmlx.a
+
+ifeq ($(PLATFORM), Darwin)
+	PLATFORM_FLAG = -DMACOS
+else
+	PLATFORM_FLAG = -DLINUX
+endif
+
+all: $(NAME)
+$(NAME):
+		g++ -std=c++17 $(DEBUG) $(FLAGS) $(PLATFORM_FLAG) main.cpp $(SRCS) -o $(NAME) -L. -lmlx
+clean:
+
+fclean: clean
+		rm -rf $(NAME)
+re: fclean all
+
+.PHONY: all clan fclean re

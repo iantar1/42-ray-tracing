@@ -11,17 +11,26 @@ Scene::Scene()
     selected_light_index = 0;
 }
 
-Scene::Scene(void* _mlx): mlx(_mlx), scene_center(Points3(0, 0, -3)), light_angle(0), bytes_per_pixel(0)
+Scene::Scene(void* _mlx)
+    : mlx(_mlx), scene_center(Points3(0, 0, 0)), light_angle(0), bytes_per_pixel(0),
+      width(IMG_WIDTH), height(IMG_HEIGHT)
 {
     selected_object = nullptr;
     selected_light_index = 0;
 }
 
+void Scene::setDimensions(int w, int h)
+{
+    width  = w;
+    height = h;
+}
+
 void Scene::init() {
-    this->win = mlx_new_window(mlx, IMG_WIDTH, IMG_HEIGHT, (char*)"RT");
-    this->img = mlx_new_image(mlx, IMG_WIDTH, IMG_HEIGHT);
+    this->win = mlx_new_window(mlx, width, height, (char*)"RT");
+    this->img = mlx_new_image(mlx, width, height);
     this->image_data = mlx_get_data_addr(img, &bpp, &size_line, &endian);
-    this->camera = Camera(Points3(0,0,0), Vec3(0,0,-1), 90.0, (double)IMG_WIDTH / IMG_HEIGHT);
+    this->camera = Camera(Points3(0, 0, 0), Vec3(0, 0, 1), 60.0, (double)width / height);
+    this->camera.setDimensions(width, height);
 }
 
 Scene::~Scene()
@@ -208,9 +217,8 @@ int Scene::compute_lighting_with_reflection(const Vec3& hit, std::unique_ptr<Obj
     if (reflectivity > 0.0 && depth < 3)
     {
         // Calculate reflection ray: R = V - 2(V · N)N
-        Vec3 hit_vec(hit.getX(), hit.getY(), hit.getZ());
-        Vec3 camera_pos = camera.getPosition();
-        Vec3 incoming_dir = normalize(hit_vec - camera_pos);  // Direction from camera to hit
+        // incoming_dir is the reverse of view_dir (already normalized above)
+        Vec3 incoming_dir = Vec3(-view_dir.getX(), -view_dir.getY(), -view_dir.getZ());
         Vec3 reflected_dir = incoming_dir - normal * (2.0 * Vec3::dot(incoming_dir, normal));
         reflected_dir = normalize(reflected_dir);
         
@@ -247,8 +255,8 @@ Vec3 Scene::cast_ray(const Ray& ray, int depth)
         return background;
     
     double closest_t = std::numeric_limits<double>::max();
-    Objects* hit_obj = nullptr;
-    
+    std::unique_ptr<Objects>* hit_uptr = nullptr;
+
     for (std::unique_ptr<Objects>& obj : objects)
     {
         double t;
@@ -257,41 +265,31 @@ Vec3 Scene::cast_ray(const Ray& ray, int depth)
             if (t < closest_t && t > 0)
             {
                 closest_t = t;
-                hit_obj = obj.get();
+                hit_uptr = &obj;
             }
         }
     }
-    
+
     // No hit, return background
-    if (hit_obj == nullptr)
+    if (hit_uptr == nullptr)
         return background;
-    
-    // Calculate hit point and lighting
+
     Points3 hit = ray.at(closest_t);
-    
-    // Find the matching unique_ptr for the hit object to pass to compute_lighting_with_reflection
-    for (std::unique_ptr<Objects>& obj : objects)
-    {
-        if (obj.get() == hit_obj)
-        {
-            int color = compute_lighting_with_reflection(hit, obj, depth);
-            int r = (color >> 16) & 0xFF;
-            int g = (color >> 8) & 0xFF;
-            int b = color & 0xFF;
-            return Vec3(r, g, b);
-        }
-    }
-    
-    return background;
+    int color = compute_lighting_with_reflection(hit, *hit_uptr, depth);
+    int r = (color >> 16) & 0xFF;
+    int g = (color >> 8) & 0xFF;
+    int b = color & 0xFF;
+    return Vec3(r, g, b);
 }
 
 void Scene::render()
 {
+    camera.updateBasis();
     int bytes = this->bpp / 8;
 
-    for (int y = 0; y < IMG_HEIGHT; y++)
+    for (int y = 0; y < height; y++)
     {
-        for (int x = 0; x < IMG_WIDTH; x++)
+        for (int x = 0; x < width; x++)
         {
             int offset = y * this->size_line + x * bytes;
             int color = BACKGROUND_COLOR;
