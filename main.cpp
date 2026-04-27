@@ -77,6 +77,7 @@ int close_window(void* param)
     Scene* scene = (Scene*)param;
     mlx_destroy_image(scene->mlx, scene->img);
     mlx_destroy_window(scene->mlx, scene->win);
+    
     free(scene->mlx);
     exit(0);
     return 0;

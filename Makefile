@@ -17,6 +17,9 @@ SRC = main.cpp \
 	  ./srcs/Cone.cpp \
 	  ./srcs/Light.cpp \
 	  ./srcs/Ray.cpp \
+	  ./srcs/Parser.cpp \
+	  ./srcs/Square.cpp \
+	  ./srcs/Triangle.cpp \
 	  ./srcs/utils.cpp \
 	  ./srcs/Vec3.cpp \
 
